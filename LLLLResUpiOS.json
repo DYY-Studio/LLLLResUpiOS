@@ -1,0 +1,8 @@
+{
+	"LiveStreamQualityLowLongSide": 1600, 
+	"LiveStreamQualityMediumLongSide": 2048,
+	"LiveStreamQualityHighLongSide": 2560,
+	"StoryQualityLowFactor": 0.8,
+	"StoryQualityMediumFactor": 1.0,
+	"StoryQualityHighFactor": 1.2
+}

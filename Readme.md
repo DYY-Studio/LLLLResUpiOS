@@ -1,9 +1,11 @@
 # LLLLResUpiOS (non-jailbreak)
-为未越狱的一般iOS设备打造的Link! Like! LoveLive! LiveStream分辨率提升工具
+为未越狱的一般iOS设备打造的Link! Like! LoveLive! LiveStream分辨率提升工具。
 
-运行时不依赖外部设备，手机即可运行。安装需要一台Windows/macOS设备。
+iOS17.4以上设备使用[SkitDebug](https://github.com/StephenDev0/StikDebug)启用JIT时不依赖外部设备，仅手机即可运行。初次配置需要一台Windows/macOS设备。
 
-目前仅有分辨率提升功能，别的功能尚未实装
+同时也是iOS Tweak示例，希望能够起到抛砖引玉的效果。
+
+目前仅有分辨率提升功能，别的功能尚未实装。
 
 # 环境要求
 * LiveContainer (Launch with JIT)
