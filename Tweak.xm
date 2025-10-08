@@ -2,7 +2,6 @@
 #include "IOS-Il2cppResolver/IL2CPP_Resolver.hpp"
 #include <Foundation/Foundation.h>
 #include <UIKit/UIApplication.h>
-#include <limits.h>
 
 static inline const char* IL2CPP_FRAMEWORK(const char* NAME) {
         NSString *appPath = [[NSBundle mainBundle] bundlePath];
@@ -69,6 +68,12 @@ void Hooked_set_targetFrameRate(int targetFrameRate) {
     Original_set_targetFrameRate(60);
 }
 
+typedef void (*original_set_antiAliasing_t)(int antiAliasing);
+static original_set_antiAliasing_t Original_set_antiAliasing = nullptr;
+void Hooked_set_antiAliasing(int antiAliasing) {
+    Original_set_antiAliasing(8);
+}
+
 static BOOL (*original_didFinishLaunchingWithOptions)(id self, SEL _cmd, UIApplication *application, NSDictionary *launchOptions) = NULL;
 static BOOL hasHooked = false;
 BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *application, NSDictionary *launchOptions) {
@@ -114,7 +119,23 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
                 (void*)Hooked_set_targetFrameRate,
                 (void**)&Original_set_targetFrameRate
             );
+			NSLog(@"[IL2CPP Tweak] Successfully hooked set_targetFrameRate!");
         }
+
+		targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+            "UnityEngine.QualitySettings",
+            "set_antiAliasing",
+            1
+        );
+
+		if (targetAddress) {
+			MSHookFunction_p(
+				targetAddress,
+				(void*)Hooked_set_antiAliasing,
+				(void**)&Original_set_antiAliasing
+			);
+			NSLog(@"[IL2CPP Tweak] Successfully hooked set_antiAliasing!");
+		}
     }
     
     return result;
