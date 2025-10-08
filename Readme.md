@@ -3,13 +3,17 @@
 
 iOS17.4以上设备使用[SkitDebug](https://github.com/StephenDev0/StikDebug)启用JIT时不依赖外部设备，仅手机即可运行。初次配置需要一台Windows/macOS设备。
 
-同时也是iOS Tweak示例，希望能够起到抛砖引玉的效果。
-
-目前仅有分辨率提升功能，别的功能尚未实装。
+本质上是LLLLToolGUI的纯Tweak实现版本，算是一个iOS Tweak示例，希望能够起到抛砖引玉的效果。
 
 # 环境要求
 * LiveContainer (Launch with JIT)
 * iOS 26 因JIT尚未兼容，暂不受支持，请持续关注iOS 26 JIT开发进度
+
+# 支持功能
+* LiveStream分辨率调整(With, Fes)
+* Story活动记录渲染分辨率调整(质量档位使用LiveStream)
+* 全局60FPS
+* Fes相机移动旋转限制解除
 
 # 使用方法
 * 如何安装LiveContainer和启用JIT请参考其他教程
@@ -18,6 +22,10 @@ iOS17.4以上设备使用[SkitDebug](https://github.com/StephenDev0/StikDebug)�
 3. 添加LLLLResUpiOS.dylib到目录下，或放入`LiveContainer/Tweaks/<文件夹名称>`下
 4. 长按LLLL，选择设置，在“模块/补丁文件夹/资料夹”选择刚刚的”模块/补丁”目录，勾选“带JIT启动/以JIT启动”
 5. 启动LLLL即可
+
+# 自定义配置
+1. 拷贝`LLLLResUpiOS.json`到`LiveContainer/Tweaks/<文件夹名称>`下，和`LLLLResUpiOS.dylib`在同一目录
+2. 编辑其中内容即可，启动时会自动读取
 
 # 许可证
 MIT
