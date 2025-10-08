@@ -1,0 +1,3 @@
+[submodule "IOS-Il2cppResolver"]
+	path = IOS-Il2cppResolver
+	url = https://github.com/DYY-Studio/IOS-Il2cppResolver
