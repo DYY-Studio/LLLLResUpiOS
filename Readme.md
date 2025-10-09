@@ -36,26 +36,26 @@ iOS17.4以上设备使用[SkitDebug](https://github.com/StephenDev0/StikDebug)�
 1. 拷贝`LLLLResUpiOS.json`到`LiveContainer/Tweaks/<文件夹名称>`下，和`LLLLResUpiOS.dylib`在同一目录
 2. 编辑其中内容即可，启动时会自动读取
 
-| 配置 | 参考值 | 介绍|
-| --- | --- | --- |
-|`LiveStream.Quality.Low.LongSide`|1920| [LiveStream] 质量档位`低`的分辨率长边 |
-|`LiveStream.Quality.Medium.LongSide`|2560| [LiveStream] 质量档位`中`的分辨率长边 |
-|`LiveStream.Quality.High.LongSide`|3840| [LiveStream] 质量档位`高`的分辨率长边 |
-|`Story.Quality.Low.Factor`|1.0| [Story] 质量档位`低`的分辨率缩放因子 |
-|`Story.Quality.Medium.Factor`|1.2| [Story] 质量档位`中`的分辨率缩放因子 |
-|`Story.Quality.High.Factor`|1.6| [Story] 质量档位`高`的分辨率缩放因子 |
-|`MagicaCloth.SimulationFrequency`|120| [LiveStream&Story] 布料模拟频率 |
-|`MagicaCloth.MaxSimulationCountPerFrame`|5| [LiveStream&Story] 布料模拟次数每帧 |
-|`TargetFPS`|60| [全局] 目标帧率 |
-|`AntiAliasingSamples`|8| [全局] 抗锯齿采样数, 可选0/2/4/8 |
-|`Enable.LiveStreamQualityHook`|true| [全局] 是否启用LiveStream质量调整钩子 |
-|`Enable.StoryQualityHook`|true| [全局] 是否启用Story质量调整钩子 |
-|`Enable.MagicaClothHook`|true| [全局] 是否启用布料模拟调整钩子 |
-|`Enable.FesCameraHook`|true| [全局] 是否启用FesCamera限制解除钩子 |
-|`Enable.FrameRateHook`|true| [全局] 是否启用帧率修改钩子 |
-|`Enable.AntiAliasingHook`|true| [全局] 是否启用抗锯齿修改钩子 |
-|`Enable.FocusAreaDelimiterHook`|false| [全局] 是否启用Focus区域限制解除钩子 |
-|`Enable.LiveStreamCoverRemoverHook`|false| [全局] 是否启用LiveStream遮挡去除钩子 |
+| 配置 | 典型值 | 对象 | 介绍|
+| --- | --- | --- | --- |
+|`LiveStream.Quality.Low.ShortSide`|1080| [LiveStream] | 质量档位`低`的分辨率短边 |
+|`LiveStream.Quality.Medium.ShortSide`|1440| [LiveStream] | 质量档位`中`的分辨率短边 |
+|`LiveStream.Quality.High.ShortSide`|2160| [LiveStream] | 质量档位`高`的分辨率短边 |
+|`Story.Quality.Low.Factor`|1.0| [Story] | 质量档位`低`的分辨率缩放因子 |
+|`Story.Quality.Medium.Factor`|1.2| [Story] | 质量档位`中`的分辨率缩放因子 |
+|`Story.Quality.High.Factor`|1.6| [Story] | 质量档位`高`的分辨率缩放因子 |
+|`MagicaCloth.SimulationFrequency`|120| [LiveStream][Story]| 布料模拟频率 |
+|`MagicaCloth.MaxSimulationCountPerFrame`|5| [LiveStream][Story]| 布料模拟次数每帧 |
+|`TargetFPS`|60| [全局]| 目标帧率 | 
+|`AntiAliasingSamples`|8| [全局]| 抗锯齿采样数, 可选0/2/4/8 |
+|`Enable.LiveStreamQualityHook`|true| [全局]| 是否启用LiveStream质量调整钩子 |
+|`Enable.StoryQualityHook`|true| [全局]| 是否启用Story质量调整钩子 |
+|`Enable.MagicaClothHook`|true| [全局]| 是否启用布料模拟调整钩子 |
+|`Enable.FesCameraHook`|true| [全局]| 是否启用FesCamera限制解除钩子：允许全向旋转和长距离移动 |
+|`Enable.FrameRateHook`|true| [全局]| 是否启用帧率修改钩子 |
+|`Enable.AntiAliasingHook`|true| [全局]| 是否启用抗锯齿修改钩子 |
+|`Enable.FocusAreaDelimiterHook`|false| [全局]| 是否启用Focus区域限制解除钩子：允许Focus区域外的角色 |
+|`Enable.LiveStreamCoverRemoverHook`|false| [全局] |是否启用LiveStream遮挡去除钩子：移除遮挡，强制显示模型 |
 
 # 许可证
 MIT
