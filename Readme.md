@@ -23,6 +23,7 @@ iOS17.4以上设备使用[SkitDebug](https://github.com/StephenDev0/StikDebug)�
 2. 在“模块/補丁”页面新建文件夹
 3. 添加LLLLResUpiOS.dylib到目录下，或放入`LiveContainer/Tweaks/<文件夹名称>`下
 4. 长按LLLL，选择设置，在“模块文件夹/補丁資料夾”选择刚刚的”模块/補丁”目录，勾选“带JIT启动/以JIT啟動”
+![IMG_7589](https://github.com/user-attachments/assets/a8c97073-687c-4c00-91a4-a95ecbb9fdac)
 5. 启动LLLL即可
 
 # 自定义配置
