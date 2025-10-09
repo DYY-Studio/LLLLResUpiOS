@@ -12,8 +12,14 @@ iOS17.4以上设备使用[SkitDebug](https://github.com/StephenDev0/StikDebug)�
 
 # 支持功能
 * LiveStream分辨率调整(With, Fes)
-* Story活动记录渲染分辨率调整(质量档位使用LiveStream)
 * 帧率上限调整
+
+<img width="1334" height="750" alt="IMG_7575" src="https://github.com/user-attachments/assets/e566c181-5de2-4885-b73b-e302c6af5913" />
+
+* Story活动记录渲染分辨率调整(质量档位使用LiveStream)
+
+<img width="1334" height="750" alt="IMG_7576" src="https://github.com/user-attachments/assets/a243741f-4a8a-45e1-999c-56e601a3e45b" />
+
 * Fes相机移动旋转限制解除
 * LiveStream遮挡图像移除
 
