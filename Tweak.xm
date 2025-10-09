@@ -36,16 +36,16 @@ Resolution Hooked_GetResolution(LiveAreaQuality quality, LiveScreenOrientation o
     int shortSide = 1080, longSide = 1920;
     switch (quality) {
         case Medium:
-			longSide = [qualityConfig[@"LiveStreamQualityMediumLongSide"] intValue];
-			shortSide = floor(longSide / 16.0f * 9.0f);
+			shortSide = [qualityConfig[@"LiveStream.Quality.Medium.ShortSide"] intValue];
+			longSide = floor(shortSide / 9.0f * 16.0f);
             break;
         case High:
-			longSide = [qualityConfig[@"LiveStreamQualityHighLongSide"] intValue];
-			shortSide = floor(longSide / 16.0f * 9.0f);
+			shortSide = [qualityConfig[@"LiveStream.Quality.High.ShortSide"] intValue];
+			longSide = floor(shortSide / 9.0f * 16.0f);
             break;
         default:
-			longSide = [qualityConfig[@"LiveStreamQualityLowLongSide"] intValue];
-			shortSide = floor(longSide / 16.0f * 9.0f);
+			shortSide = [qualityConfig[@"LiveStream.Quality.Low.ShortSide"] intValue];
+			longSide = floor(shortSide / 9.0f * 16.0f);
     }
     switch (orientation) {
         case Landscape:
@@ -56,7 +56,7 @@ Resolution Hooked_GetResolution(LiveAreaQuality quality, LiveScreenOrientation o
             customRes.width = shortSide;
             customRes.height = longSide;
     }
-    customRes.refreshRate = 60;
+    customRes.refreshRate = [qualityConfig[@"TargetFPS"] intValue];
     return customRes;
     // return Original_GetResolution(quality, orientation);
 }
@@ -115,7 +115,7 @@ void loadConfig() {
 typedef void (*original_set_targetFrameRate_t)(int targetFrameRate);
 static original_set_targetFrameRate_t Original_set_targetFrameRate = nullptr;
 void Hooked_set_targetFrameRate(int targetFrameRate) {
-    Original_set_targetFrameRate([qualityConfig[@"targetFPS"] intValue]);
+    Original_set_targetFrameRate([qualityConfig[@"TargetFPS"] intValue]);
 }
 
 typedef void (*original_set_antiAliasing_t)(int antiAliasing);
@@ -130,9 +130,8 @@ static original_fesLiveFixedCameraCtor_t Original_fesLiveFixedCameraCtor = nullp
 void Hooked_fesLiveFixedCameraCtor(void *self, IL2CPP::CClass* camera, IL2CPP::CClass* targetTexture, IL2CPP::CClass* setting, LiveCameraType cameraType) {
 	setting->SetMemberValue<float>("moveRadiusLimit", 100000.0f);
 	setting->SetMemberValue<float>("rotateAngleLimit", 360.0f);
-	setting->SetMemberValue<float>("panSensitivity", 1.0f);
-	setting->SetMemberValue<float>("fovMin", 10.0f);
-	setting->SetMemberValue<float>("fovMax", 150.0f);
+	setting->SetMemberValue<float>("panSensitivity", 0.05f);
+	setting->SetMemberValue<Unity::Vector2>("fovRange", Unity::Vector2(10.0f, 150.0f));
     Original_fesLiveFixedCameraCtor(self, camera, targetTexture, setting, cameraType);
 }
 
@@ -141,9 +140,8 @@ static original_idolTargetingCamera_t Original_idolTargetingCamera = nullptr;
 void Hooked_idolTargetingCamera(void *self, IL2CPP::CClass* camera, IL2CPP::CClass* targetTexture, IL2CPP::CClass* setting) {
     setting->SetMemberValue<float>("moveRadiusLimit", 100000.0f);
     setting->SetMemberValue<float>("rotateAngleLimit", 360.0f);
-    setting->SetMemberValue<float>("panSensitivity", 1.0f);
-	setting->SetMemberValue<float>("fovMin", 10.0f);
-	setting->SetMemberValue<float>("fovMax", 150.0f);
+    setting->SetMemberValue<float>("panSensitivity", 0.05f);
+	setting->SetMemberValue<Unity::Vector2>("fovRange", Unity::Vector2(10.0f, 150.0f));
 	Original_idolTargetingCamera(self, camera, targetTexture, setting);
 }
 
@@ -220,18 +218,18 @@ RenderTextureDescriptor Hooked_CreateRenderTextureDescriptor(Unity::CCamera* cam
 				float storyFactor = 1.0f;
 				switch (get_RenderTextureQuality()) {
 					case Low:
-						storyFactor = [qualityConfig[@"StoryQualityLowFactor"] floatValue];
+						storyFactor = [qualityConfig[@"Story.Quality.Low.Factor"] floatValue];
 						break;
 					case Medium:
-						storyFactor = [qualityConfig[@"StoryQualityMediumFactor"] floatValue];
+						storyFactor = [qualityConfig[@"Story.Quality.Medium.Factor"] floatValue];
 						break;
 					default:
-						storyFactor = [qualityConfig[@"StoryQualityHighFactor"] floatValue];
+						storyFactor = [qualityConfig[@"Story.Quality.High.Factor"] floatValue];
 				}
 
 				targetTexture->SetPropertyValue<int>("width", floor(width * storyFactor));
 				targetTexture->SetPropertyValue<int>("height", floor(height * storyFactor));
-				targetTexture->SetPropertyValue<int>("antiAliasing", 8);
+				targetTexture->SetPropertyValue<int>("antiAliasing", [qualityConfig[@"AntiAliasingSamples"] intValue]);
 				targetTexture->SetPropertyValue<bool>("autoGenerateMips", true);
 				targetTexture->SetPropertyValue<bool>("useMipMap", true);
 				targetTexture->SetPropertyValue<bool>("useDynamicScale", true);
@@ -292,15 +290,16 @@ void hooked_FootShadowManipulator_SetupObservePropertyb150(void* self, FootShado
 	original_FootShadowManipulator_SetupObservePropertyb150(self, value);
 }
 
-struct IsVisiblePacket {
-	bool IsVisible;
-	double SyncTime;
-};
-typedef void (*original_CharacterVisibleReceiver_SetupReceiveActionsb90_t)(void* self, IsVisiblePacket value);
-original_CharacterVisibleReceiver_SetupReceiveActionsb90_t original_CharacterVisibleReceiver_SetupReceiveActionsb90 = nullptr;
-void hooked_CharacterVisibleReceiver_SetupReceiveActionsb90(void* self, IsVisiblePacket value) {
-	value.IsVisible = true;
-	original_CharacterVisibleReceiver_SetupReceiveActionsb90(self, value);
+typedef void (*original_CharacterVisibleController_SetVisible_t)(void* self, bool value);
+original_CharacterVisibleController_SetVisible_t original_CharacterVisibleController_SetVisible = nullptr;
+void hooked_CharacterVisibleController_SetVisible(void* self, bool visible) {
+	original_CharacterVisibleController_SetVisible(self, true);
+}
+
+typedef void (*original_FocusableCharacter_ctor_b50_t)(void* self, bool value);
+original_FocusableCharacter_ctor_b50_t original_FocusableCharacter_ctor_b50 = nullptr;
+void hooked_FocusableCharacter_ctor_b50(void* self, bool value) {
+	original_FocusableCharacter_ctor_b50(self, true);
 }
 
 static BOOL (*original_didFinishLaunchingWithOptions)(id self, SEL _cmd, UIApplication *application, NSDictionary *launchOptions) = NULL;
@@ -468,6 +467,7 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 					(void*)&hooked_IsFocusableChecker_SetIsFocusAllowed,
 					(void**)&original_IsFocusableChecker_SetIsFocusAllowed
 				);
+				NSLog(@"[IL2CPP Tweak] Inspix.Character.IsFocusableChecker::SetIsFocusAllowed hooked");
 			}
 
 			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
@@ -482,6 +482,7 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 					(void*)&hooked_IsFocusableChecker_IsInFocusableArea,
 					(void**)&original_IsFocusableChecker_IsInFocusableArea
 				);
+				NSLog(@"[IL2CPP Tweak] Inspix.Character.IsFocusableChecker::IsInFocusableArea hooked");
 			}
 		}
 
@@ -498,6 +499,7 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 					(void*)&hooked_CoverImageCommandReceiver_Awakeb90,
 					(void**)&original_CoverImageCommandReceiver_Awakeb90
 				);
+				NSLog(@"[IL2CPP Tweak] CoverImageCommandReceiver Awake hooked");
 			}
 
 			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
@@ -512,20 +514,37 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 					(void*)&hooked_FootShadowManipulator_SetupObservePropertyb150,
 					(void**)&original_FootShadowManipulator_SetupObservePropertyb150
 				);
+				NSLog(@"[IL2CPP Tweak] FootShadowManipulator::<SetupObserveProperty>b__15_0 hooked");
 			}
 
 			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
-				"Inspix.Character.CharacterVisibleReceiver",
-				"<SetupReceiveActions>b__9_0",
+				"Inspix.Character.CharacterVisibleController",
+				"SetVisible",
 				1
 			);
 
 			if (targetAddress) {
 				MSHookFunction_p(
 					targetAddress,
-					(void*)&hooked_CharacterVisibleReceiver_SetupReceiveActionsb90,
-					(void**)&original_CharacterVisibleReceiver_SetupReceiveActionsb90
+					(void*)&hooked_CharacterVisibleController_SetVisible,
+					(void**)&original_CharacterVisibleController_SetVisible
 				);
+				NSLog(@"[IL2CPP Tweak] CharacterVisibleController::SetVisible hooked");
+			}
+
+			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+				"Inspix.FocusableCharacter",
+				"<.ctor>b__5_0",
+				1
+			);
+
+			if (targetAddress) {
+				MSHookFunction_p(
+					targetAddress,
+					(void*)&hooked_FocusableCharacter_ctor_b50,
+					(void**)&original_FocusableCharacter_ctor_b50
+				);
+				NSLog(@"[IL2CPP Tweak] FocusableCharacter::<.ctor>b__5_0 hooked");
 			}
 		}
     }
@@ -583,9 +602,9 @@ static void tweakConstructor() {
     }
 
 	qualityConfig = [NSMutableDictionary dictionaryWithObjectsAndKeys:
-		@1920, @"LiveStream.Quality.Low.LongSide", 
-		@2560, @"LiveStream.Quality.Medium.LongSide",
-		@3840, @"LiveStream.Quality.High.LongSide",
+		@1080, @"LiveStream.Quality.Low.ShortSide", 
+		@1440, @"LiveStream.Quality.Medium.ShortSide",
+		@2160, @"LiveStream.Quality.High.ShortSide",
 		@1.0f, @"Story.Quality.Low.Factor",
 		@1.2f, @"Story.Quality.Medium.Factor",
 		@1.6f, @"Story.Quality.High.Factor",
