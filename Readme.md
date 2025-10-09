@@ -20,9 +20,9 @@ iOS17.4以上设备使用[SkitDebug](https://github.com/StephenDev0/StikDebug)�
 # 使用方法
 * 如何安装LiveContainer和启用JIT请参考其他教程
 1. 在LiveContainer安装Link! Like! LoveLive! App
-2. 在“模块/补丁”页面新建文件夹
+2. 在“模块/補丁”页面新建文件夹
 3. 添加LLLLResUpiOS.dylib到目录下，或放入`LiveContainer/Tweaks/<文件夹名称>`下
-4. 长按LLLL，选择设置，在“模块/补丁文件夹/资料夹”选择刚刚的”模块/补丁”目录，勾选“带JIT启动/以JIT启动”
+4. 长按LLLL，选择设置，在“模块文件夹/補丁資料夾”选择刚刚的”模块/補丁”目录，勾选“带JIT启动/以JIT啟動”
 5. 启动LLLL即可
 
 # 自定义配置
