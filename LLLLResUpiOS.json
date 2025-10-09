@@ -1,8 +1,20 @@
 {
-	"LiveStreamQualityLowLongSide": 1600, 
-	"LiveStreamQualityMediumLongSide": 2048,
-	"LiveStreamQualityHighLongSide": 2560,
-	"StoryQualityLowFactor": 0.8,
-	"StoryQualityMediumFactor": 1.0,
-	"StoryQualityHighFactor": 1.2
+	"LiveStream.Quality.Low.LongSide": 1600, 
+	"LiveStream.Quality.Medium.LongSide": 2048,
+	"LiveStream.Quality.High.LongSide": 2560,
+	"Story.Quality.Low.Factor": 0.8,
+	"Story.Quality.Medium.Factor": 1.0,
+	"Story.Quality.High.Factor": 1.2,
+    "MagicaCloth.SimulationFrequency": 120,
+    "MagicaCloth.MaxSimulationCountPerFrame": 5,
+    "TargetFPS": 60,
+    "AntiAliasingSamples": 8,
+    "Enable.LiveStreamQualityHook": true,
+    "Enable.StoryQualityHook": true,
+    "Enable.MagicaClothHook": true,
+    "Enable.FesCameraHook": true,
+    "Enable.FrameRateHook": true,
+    "Enable.AntiAliasingHook": true,
+    "Enable.FocusAreaDelimiterHook": false,
+    "Enable.LiveStreamCoverRemoverHook": false
 }

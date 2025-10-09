@@ -115,13 +115,13 @@ void loadConfig() {
 typedef void (*original_set_targetFrameRate_t)(int targetFrameRate);
 static original_set_targetFrameRate_t Original_set_targetFrameRate = nullptr;
 void Hooked_set_targetFrameRate(int targetFrameRate) {
-    Original_set_targetFrameRate(60);
+    Original_set_targetFrameRate([qualityConfig[@"targetFPS"] intValue]);
 }
 
 typedef void (*original_set_antiAliasing_t)(int antiAliasing);
 static original_set_antiAliasing_t Original_set_antiAliasing = nullptr;
 void Hooked_set_antiAliasing(int antiAliasing) {
-    Original_set_antiAliasing(8);
+    Original_set_antiAliasing([qualityConfig[@"AntiAliasingSamples"] intValue]);
 }
 
 enum LiveCameraType { Undefined, Dynamic, Arena, Stand, SchoolIdle };
@@ -241,6 +241,68 @@ RenderTextureDescriptor Hooked_CreateRenderTextureDescriptor(Unity::CCamera* cam
 	return original_CreateRenderTextureDescriptor(camera, renderScale, isHdrEnabled, msaaSamples, needsAlpha, requiresOpaqueTexture);
 }
 
+typedef void (*original_MagicaManager_SetSimulationFrequency_t)(int frequency);
+original_MagicaManager_SetSimulationFrequency_t original_MagicaManager_SetSimulationFrequency = nullptr;
+void hooked_MagicaManager_SetSimulationFrequency(int frequency)
+{
+	original_MagicaManager_SetSimulationFrequency([qualityConfig[@"MagicaCloth.SimulationFrequency"] intValue]);
+}
+
+typedef void (*original_MagicaManager_SetMaxSimulationCountPerFrame_t)(int count);
+original_MagicaManager_SetMaxSimulationCountPerFrame_t original_MagicaManager_SetMaxSimulationCountPerFrame = nullptr;
+void hooked_MagicaManager_SetMaxSimulationCountPerFrame(int count)
+{
+	original_MagicaManager_SetMaxSimulationCountPerFrame([qualityConfig[@"MagicaCloth.MaxSimulationCountPerFrame"] intValue]);
+}
+
+typedef void (*original_IsFocusableChecker_SetIsFocusAllowed_t)(void* self, bool isFocusAllowed);
+original_IsFocusableChecker_SetIsFocusAllowed_t original_IsFocusableChecker_SetIsFocusAllowed = nullptr;
+void hooked_IsFocusableChecker_SetIsFocusAllowed(void* self, bool isFocusAllowed)
+{
+	original_IsFocusableChecker_SetIsFocusAllowed(self, true);
+}
+
+typedef bool (*original_IsFocusableChecker_IsInFocusableArea_t)(void* self);
+original_IsFocusableChecker_IsInFocusableArea_t original_IsFocusableChecker_IsInFocusableArea = nullptr;
+bool hooked_IsFocusableChecker_IsInFocusableArea(void* self)
+{
+	return true;
+}
+
+struct CoverImageCommand {
+	Unity::System_String* CoverImageName;
+	double SyncTime;	
+};
+typedef void (*original_CoverImageCommandReceiver_Awakeb90_t)(void* self, CoverImageCommand value);
+original_CoverImageCommandReceiver_Awakeb90_t original_CoverImageCommandReceiver_Awakeb90 = nullptr;
+void hooked_CoverImageCommandReceiver_Awakeb90(void* self, CoverImageCommand value)
+{
+	value.CoverImageName = IL2CPP::String::New("");
+	original_CoverImageCommandReceiver_Awakeb90(self, value);
+}
+
+struct FootShadowActivateCommand {
+	bool IsActive;
+	double SyncTime;
+};
+typedef void (*original_FootShadowManipulator_SetupObservePropertyb150_t)(void* self, FootShadowActivateCommand value);
+original_FootShadowManipulator_SetupObservePropertyb150_t original_FootShadowManipulator_SetupObservePropertyb150 = nullptr;
+void hooked_FootShadowManipulator_SetupObservePropertyb150(void* self, FootShadowActivateCommand value) {
+	value.IsActive = true;
+	original_FootShadowManipulator_SetupObservePropertyb150(self, value);
+}
+
+struct IsVisiblePacket {
+	bool IsVisible;
+	double SyncTime;
+};
+typedef void (*original_CharacterVisibleReceiver_SetupReceiveActionsb90_t)(void* self, IsVisiblePacket value);
+original_CharacterVisibleReceiver_SetupReceiveActionsb90_t original_CharacterVisibleReceiver_SetupReceiveActionsb90 = nullptr;
+void hooked_CharacterVisibleReceiver_SetupReceiveActionsb90(void* self, IsVisiblePacket value) {
+	value.IsVisible = true;
+	original_CharacterVisibleReceiver_SetupReceiveActionsb90(self, value);
+}
+
 static BOOL (*original_didFinishLaunchingWithOptions)(id self, SEL _cmd, UIApplication *application, NSDictionary *launchOptions) = NULL;
 static BOOL hasHooked = false;
 BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *application, NSDictionary *launchOptions) {
@@ -252,7 +314,6 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
     NSLog(@"[Substrate Hook] C++ IL2CPP Hook logic initiated.");
 
     if (IL2CPP::Initialize(dlopen(IL2CPP_FRAMEWORK(BINARY_NAME), RTLD_NOLOAD))) {
-		hasHooked = true;
         NSLog(@"[IL2CPP Tweak] IL2CPP Initialized.");
 
         void* targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
@@ -261,7 +322,7 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
             2
         );
 
-        if (targetAddress) {
+        if ([qualityConfig[@"Enable.LiveStreamQualityHook"] boolValue] && targetAddress) {
 
             MSHookFunction_p(
                 targetAddress,
@@ -278,7 +339,7 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
             1
         );
 
-        if (targetAddress) { 
+        if ([qualityConfig[@"Enable.FrameRateHook"] boolValue] && targetAddress) { 
             MSHookFunction_p(
                 targetAddress,
                 (void*)Hooked_set_targetFrameRate,
@@ -293,7 +354,7 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
             1
         );
 
-		if (targetAddress) {
+		if ([qualityConfig[@"Enable.AntiAliasingHook"] boolValue] && targetAddress) {
 			MSHookFunction_p(
 				targetAddress,
 				(void*)Hooked_set_antiAliasing,
@@ -308,7 +369,7 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
             4
         );
 
-		if (targetAddress) {
+		if ([qualityConfig[@"Enable.FesCameraHook"] boolValue] && targetAddress) {
 			MSHookFunction_p(
 				targetAddress,
 				(void*)Hooked_fesLiveFixedCameraCtor,
@@ -323,7 +384,7 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
             3
         );
 
-		if (targetAddress) {
+		if ([qualityConfig[@"Enable.FesCameraHook"] boolValue] && targetAddress) {
 			MSHookFunction_p(
 				targetAddress,
 				(void*)Hooked_idolTargetingCamera,
@@ -338,7 +399,7 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 			0
 		);
 
-		if (targetAddress) {
+		if (![qualityConfig[@"Enable.FocusAreaDelimiterHook"] boolValue] && targetAddress) {
 			MSHookFunction_p(
 				targetAddress,
 				(void*)Hooked_setFocusArea,
@@ -348,24 +409,124 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 		}
 
 		targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
-            "Tecotec.StoryModelSpace",
-			"SetUp",
-			0
-		);
-
-		targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
 			"UnityEngine.Rendering.Universal.UniversalRenderPipeline",
 			"CreateRenderTextureDescriptor",
 			6
 		);
 
-		if (targetAddress) {
+		if ([qualityConfig[@"Enable.StoryQualityHook"] boolValue] && targetAddress) {
 			MSHookFunction_p(
 				targetAddress,
 				(void*)Hooked_CreateRenderTextureDescriptor,
 				(void**)&original_CreateRenderTextureDescriptor
 			);
 			NSLog(@"[IL2CPP Tweak] Successfully hooked CreateRenderTextureDescriptor!");
+		}
+
+		if ([qualityConfig[@"Enable.MagicaClothHook"] boolValue]) {
+			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+				"MagicaCloth2.MagicaManager",
+				"SetSimulationFrequency",
+				1
+			);
+
+			if (targetAddress) {
+				MSHookFunction_p(
+					targetAddress,
+					(void*)hooked_MagicaManager_SetSimulationFrequency,
+					(void**)&original_MagicaManager_SetSimulationFrequency
+				);
+				NSLog(@"[IL2CPP Tweak] Successfully hooked SetSimulationFrequency!");
+			}
+
+			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+				"MagicaCloth2.MagicaManager",
+				"SetMaxSimulationCountPerFrame",
+				1
+			);
+
+			if (targetAddress) {
+				MSHookFunction_p(
+					targetAddress,
+					(void*)hooked_MagicaManager_SetMaxSimulationCountPerFrame,
+					(void**)&original_MagicaManager_SetMaxSimulationCountPerFrame
+				);
+				NSLog(@"[IL2CPP Tweak] Successfully hooked SetMaxSimulationCountPerFrame!");
+			}
+		}
+
+		if ([qualityConfig[@"Enable.FocusAreaDelimiterHook"] boolValue]) {
+			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+				"Inspix.Character.IsFocusableChecker",
+				"SetIsFocusAllowed",
+				1
+			);
+
+			if (targetAddress) { 
+				MSHookFunction_p(
+					targetAddress,
+					(void*)&hooked_IsFocusableChecker_SetIsFocusAllowed,
+					(void**)&original_IsFocusableChecker_SetIsFocusAllowed
+				);
+			}
+
+			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+				"Inspix.Character.IsFocusableChecker",
+				"IsInFocusableArea",
+				0
+			);
+
+			if (targetAddress) { 
+				MSHookFunction_p(
+					targetAddress,
+					(void*)&hooked_IsFocusableChecker_IsInFocusableArea,
+					(void**)&original_IsFocusableChecker_IsInFocusableArea
+				);
+			}
+		}
+
+		if ([qualityConfig[@"Enable.LiveStreamCoverRemoverHook"] boolValue]) {
+			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+				"Inspix.CoverImageCommandReceiver",
+				"<Awake>b__9_0",
+				1
+			);
+
+			if (targetAddress) {
+				MSHookFunction_p(
+					targetAddress,
+					(void*)&hooked_CoverImageCommandReceiver_Awakeb90,
+					(void**)&original_CoverImageCommandReceiver_Awakeb90
+				);
+			}
+
+			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+				"Inspix.Character.FootShadow.FootShadowManipulator",
+				"<SetupObserveProperty>b__15_0",
+				1
+			);
+
+			if (targetAddress) {
+				MSHookFunction_p(
+					targetAddress,
+					(void*)&hooked_FootShadowManipulator_SetupObservePropertyb150,
+					(void**)&original_FootShadowManipulator_SetupObservePropertyb150
+				);
+			}
+
+			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+				"Inspix.Character.CharacterVisibleReceiver",
+				"<SetupReceiveActions>b__9_0",
+				1
+			);
+
+			if (targetAddress) {
+				MSHookFunction_p(
+					targetAddress,
+					(void*)&hooked_CharacterVisibleReceiver_SetupReceiveActionsb90,
+					(void**)&original_CharacterVisibleReceiver_SetupReceiveActionsb90
+				);
+			}
 		}
     }
     
@@ -422,12 +583,25 @@ static void tweakConstructor() {
     }
 
 	qualityConfig = [NSMutableDictionary dictionaryWithObjectsAndKeys:
-		@1920, @"LiveStreamQualityLowLongSide", 
-		@2560, @"LiveStreamQualityMediumLongSide",
-		@3840, @"LiveStreamQualityHighLongSide",
-		@1.0f, @"StoryQualityLowFactor",
-		@1.2f, @"StoryQualityMediumFactor",
-		@1.6f, @"StoryQualityHighFactor", nil
+		@1920, @"LiveStream.Quality.Low.LongSide", 
+		@2560, @"LiveStream.Quality.Medium.LongSide",
+		@3840, @"LiveStream.Quality.High.LongSide",
+		@1.0f, @"Story.Quality.Low.Factor",
+		@1.2f, @"Story.Quality.Medium.Factor",
+		@1.6f, @"Story.Quality.High.Factor",
+		@120, @"MagicaCloth.SimulationFrequency",
+		@5, @"MagicaCloth.MaxSimulationCountPerFrame",
+		@60, @"TargetFPS",
+		@8, @"AntiAliasingSamples",
+		@true, @"Enable.LiveStreamQualityHook",
+		@true, @"Enable.StoryQualityHook",
+		@true, @"Enable.MagicaClothHook",
+		@true, @"Enable.FesCameraHook",
+		@true, @"Enable.FrameRateHook",
+		@true, @"Enable.AntiAliasingHook",
+		@false, @"Enable.FocusAreaDelimiterHook",
+		@false, @"Enable.LiveStreamCoverRemoverHook",
+		nil
 	];
 
 	loadConfig();
