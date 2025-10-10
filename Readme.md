@@ -24,6 +24,7 @@ iOS17.4以上设备使用[SkitDebug](https://github.com/StephenDev0/StikDebug)�
 * LiveStream遮挡图像移除
 
 # 使用方法
+## 未越狱iOS
 * 如何安装LiveContainer和启用JIT请参考其他教程
 1. 在LiveContainer安装Link! Like! LoveLive! App
 2. 在“模块/補丁”页面新建文件夹
@@ -31,6 +32,9 @@ iOS17.4以上设备使用[SkitDebug](https://github.com/StephenDev0/StikDebug)�
 4. 长按LLLL，选择设置，在“模块文件夹/補丁資料夾”选择刚刚的”模块/補丁”目录，勾选“带JIT启动/以JIT啟動”
 ![IMG_7589](https://github.com/user-attachments/assets/a8c97073-687c-4c00-91a4-a95ecbb9fdac)
 5. 启动LLLL即可
+
+## 已越狱iOS
+需要自行修改源代码，使其按照传统方式载入CydiaSubstrate，然后`make package`，安装到设备即可
 
 # 自定义配置
 1. 拷贝`LLLLResUpiOS.json`到`LiveContainer/Tweaks/<文件夹名称>`下，和`LLLLResUpiOS.dylib`在同一目录
