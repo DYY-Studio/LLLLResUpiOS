@@ -323,19 +323,19 @@ void hooked_FesLiveSettingsView_InitButtons(void* self) {
 	original_FesLiveSettingsView_InitButtons(self);
 	IL2CPP::CClass* pSelf = reinterpret_cast<IL2CPP::CClass*>(self);
 	pSelf->GetMemberValue<IL2CPP::CClass*>("qualityLowRadioButton")->GetMemberValue<IL2CPP::CClass*>("label")->SetPropertyValue<Unity::System_String*>("text", IL2CPP::String::New(
-		[[NSString stringWithFormat:@"%dp\n%.1fx", 
+		[[NSString stringWithFormat:@"%dp\n%.2fx", 
 			[qualityConfig[@"LiveStream.Quality.Low.ShortSide"] intValue],
 			[qualityConfig[@"Story.Quality.Low.Factor"] floatValue]
 			] UTF8String]
 	));
 	pSelf->GetMemberValue<IL2CPP::CClass*>("qualityMiddleRadioButton")->GetMemberValue<IL2CPP::CClass*>("label")->SetPropertyValue<Unity::System_String*>("text", IL2CPP::String::New(
-		[[NSString stringWithFormat:@"%dp\n%.1fx", 
+		[[NSString stringWithFormat:@"%dp\n%.2fx", 
 			[qualityConfig[@"LiveStream.Quality.Medium.ShortSide"] intValue],
 			[qualityConfig[@"Story.Quality.Medium.Factor"] floatValue]
 			] UTF8String]
 	));
 	pSelf->GetMemberValue<IL2CPP::CClass*>("qualityHighRadioButton")->GetMemberValue<IL2CPP::CClass*>("label")->SetPropertyValue<Unity::System_String*>("text", IL2CPP::String::New(
-		[[NSString stringWithFormat:@"%dp\n%.1fx", 
+		[[NSString stringWithFormat:@"%dp\n%.2fx", 
 			[qualityConfig[@"LiveStream.Quality.High.ShortSide"] intValue],
 			[qualityConfig[@"Story.Quality.High.Factor"] floatValue]
 			] UTF8String]
