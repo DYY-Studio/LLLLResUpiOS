@@ -405,7 +405,7 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 			NSLog(@"[IL2CPP Tweak] TitleSceneController::SetPlayerId hooked");
         }
 
-		if (quality[@"Enable.LiveStreamQualityHook"] && qualityConfig[@"Enable.StoryQualityHook"]) {
+		if (qualityConfig[@"Enable.LiveStreamQualityHook"] && qualityConfig[@"Enable.StoryQualityHook"]) {
 			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
 				"Tecotec.FesLiveSettingsView",
 				"InitButtons",
