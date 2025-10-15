@@ -14,11 +14,11 @@ iOS17.4以上设备使用[SkitDebug](https://github.com/StephenDev0/StikDebug)�
 * LiveStream分辨率调整(With, Fes)
 * 帧率上限调整
 
-<img width="1334" height="750" alt="IMG_7575" src="https://github.com/user-attachments/assets/e566c181-5de2-4885-b73b-e302c6af5913" />
+<img width="1334" height="750" alt="IMG_7575" src="https://github.com/user-attachments/assets/e566c181-5de2-4885-b73b-e302c6af5913" style="width: 50%; height: 50%;" />
 
 * Story活动记录渲染分辨率调整(质量档位使用LiveStream)
 
-<img width="1334" height="750" alt="IMG_7576" src="https://github.com/user-attachments/assets/a243741f-4a8a-45e1-999c-56e601a3e45b" />
+<img width="1334" height="750" alt="IMG_7576" src="https://github.com/user-attachments/assets/a243741f-4a8a-45e1-999c-56e601a3e45b" style="width: 50%; height: 50%;" />
 
 * Fes相机移动旋转限制解除
 * LiveStream遮挡图像移除
@@ -29,8 +29,8 @@ iOS17.4以上设备使用[SkitDebug](https://github.com/StephenDev0/StikDebug)�
 1. 在LiveContainer安装Link! Like! LoveLive! App
 2. 在“模块/補丁”页面新建文件夹
 3. 添加LLLLResUpiOS.dylib到目录下，或放入`LiveContainer/Tweaks/<文件夹名称>`下
-4. 长按LLLL，选择设置，在“模块文件夹/補丁資料夾”选择刚刚的”模块/補丁”目录，勾选“带JIT启动/以JIT啟動”
-![IMG_7589](https://github.com/user-attachments/assets/a8c97073-687c-4c00-91a4-a95ecbb9fdac)
+4. 长按LLLL，选择设置，在“模块文件夹/補丁資料夾”选择刚刚的”模块/補丁”目录，勾选“带JIT启动/以JIT啟動”<br>
+<img src="https://github.com/user-attachments/assets/a8c97073-687c-4c00-91a4-a95ecbb9fdac" style="width: 30%; height: 30%;" />
 5. 启动LLLL即可
 
 ## 已越狱iOS
