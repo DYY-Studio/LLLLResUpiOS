@@ -22,6 +22,7 @@ iOS17.4以上设备使用[SkitDebug](https://github.com/StephenDev0/StikDebug)�
 
 * Fes相机移动旋转限制解除
 * LiveStream遮挡图像移除
+* QuestLive性能优化
 
 # 使用方法
 ## 未越狱iOS
@@ -52,6 +53,9 @@ iOS17.4以上设备使用[SkitDebug](https://github.com/StephenDev0/StikDebug)�
 |`MagicaCloth.MaxSimulationCountPerFrame`|5| [LiveStream][Story]| 布料模拟次数每帧 |
 |`TargetFPS`|60| [全局]| 目标帧率 | 
 |`AntiAliasingSamples`|8| [全局]| 抗锯齿采样数, 可选0/2/4/8 |
+|`Enable.QuestLive.NoParticlesHook`|true| [QuestLive]| 关闭QuestLive心驻留时粒子效果 |
+|`Enable.QuestLive.NoThrowAndWaitHook` | true | [QuestLive] | 关闭QuestLive抛心与心驻留：性能影响最大 |
+|`Enable.QuestLive.NoCutinCharacterHook` | true | [QuestLive] | 关闭QuestLive发动技能时右侧角色切入 |
 |`Enable.LiveStreamQualityHook`|true| [全局]| 是否启用LiveStream质量调整钩子 |
 |`Enable.StoryQualityHook`|true| [全局]| 是否启用Story质量调整钩子 |
 |`Enable.MagicaClothHook`|true| [全局]| 是否启用布料模拟调整钩子 |

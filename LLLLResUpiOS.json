@@ -1,10 +1,10 @@
 {
-    "LiveStream.Quality.Low.ShortSide": 900, 
-    "LiveStream.Quality.Medium.ShortSide": 1152,
+    "LiveStream.Quality.Low.ShortSide": 720, 
+    "LiveStream.Quality.Medium.ShortSide": 1080,
     "LiveStream.Quality.High.ShortSide": 1440,
-    "Story.Quality.Low.Factor": 0.8,
+    "Story.Quality.Low.Factor": 0.6,
     "Story.Quality.Medium.Factor": 1.0,
-    "Story.Quality.High.Factor": 1.2,
+    "Story.Quality.High.Factor": 1.4,
     "MagicaCloth.SimulationFrequency": 120,
     "MagicaCloth.MaxSimulationCountPerFrame": 5,
     "TargetFPS": 60,
@@ -16,5 +16,8 @@
     "Enable.FrameRateHook": true,
     "Enable.AntiAliasingHook": true,
     "Enable.FocusAreaDelimiterHook": false,
-    "Enable.LiveStreamCoverRemoverHook": false
+    "Enable.LiveStreamCoverRemoverHook": false,
+    "Enable.QuestLive.NoParticlesHook": true,
+    "Enable.QuestLive.NoThrowAndWaitHook": true,
+    "Enable.QuestLive.NoCutinCharacterHook": true
 }

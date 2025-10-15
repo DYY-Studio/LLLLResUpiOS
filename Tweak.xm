@@ -342,6 +342,25 @@ void hooked_FesLiveSettingsView_InitButtons(void* self) {
 	));
 }
 
+// Tecotec.QuestLive.Live.QuestLiveHeartObject.PlayThrowAnimation
+typedef void (*original_QuestLiveHeartObject_PlayThrowAnimation_t)(void* self, float duration, IL2CPP::CClass* playWaitAnimation);
+original_QuestLiveHeartObject_PlayThrowAnimation_t original_QuestLiveHeartObject_PlayThrowAnimation = nullptr;
+void hooked_QuestLiveHeartObject_PlayThrowAnimation(void* self, float duration, IL2CPP::CClass* playWaitAnimation) {
+	// original_QuestLiveHeartObject_PlayThrowAnimation(self, 0.0f, playWaitAnimation);
+	// IL2CPP::CClass* pSelf = reinterpret_cast<IL2CPP::CClass*>(self);
+	// pSelf->GetMemberValue<IL2CPP::CClass*>("_particleShine")->CallMethodSafe<bool>("Stop");
+}
+
+// Tecotec.QuestLive.Live.QuestLiveHeartObject.PlayParticles()
+typedef void (*original_QuestLiveHeartObject_PlayParticles_t)(void* self);
+original_QuestLiveHeartObject_PlayParticles_t original_QuestLiveHeartObject_PlayParticles = nullptr;
+void hooked_QuestLiveHeartObject_PlayParticles(void* self) {}
+
+// Tecotec.QuestLive.Live.QuestLiveCutinCharacter.PlaySkillAnimation()
+typedef void (*original_QuestLiveCutinCharacter_PlaySkillAnimation_t)(void* self);
+original_QuestLiveCutinCharacter_PlaySkillAnimation_t original_QuestLiveCutinCharacter_PlaySkillAnimation = nullptr;
+void hooked_QuestLiveCutinCharacter_PlaySkillAnimation(void* self) {}
+
 // typedef void (*original_Client_ApiClient_Deserialize_t)(void* self, IL2CPP::CClass* response, IL2CPP::CClass* returnType);
 // original_Client_ApiClient_Deserialize_t original_Client_ApiClient_Deserialize = nullptr;
 // void hooked_Client_ApiClient_Deserialize(void* self, IL2CPP::CClass* response, IL2CPP::CClass* returnType) {
@@ -637,6 +656,60 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 				NSLog(@"[IL2CPP Tweak] FocusableCharacter::<.ctor>b__5_0 hooked");
 			}
 		}
+
+		if ([qualityConfig[@"Enable.QuestLive.NoParticlesHook"] boolValue]) {
+			// Tecotec.QuestLive.Live.QuestLiveHeartObject.PlayParticles
+			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+				"Tecotec.QuestLive.Live.QuestLiveHeartObject",
+				"PlayParticles",
+				0
+			);
+
+			if (targetAddress) {
+				MSHookFunction_p(
+					targetAddress,
+					(void*)&hooked_QuestLiveHeartObject_PlayParticles,
+					(void**)&original_QuestLiveHeartObject_PlayParticles
+				);
+				NSLog(@"[IL2CPP Tweak] QuestLiveHeartObject::PlayParticles hooked");
+			}
+		}
+
+		if ([qualityConfig[@"Enable.QuestLive.NoThrowAndWaitHook"] boolValue]) {
+			// Tecotec.QuestLive.Live.QuestLiveHeartObject.PlayThrowAnimation
+			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+				"Tecotec.QuestLive.Live.QuestLiveHeartObject",
+				"PlayThrowAnimation",
+				2
+			);
+
+			if (targetAddress) {
+				MSHookFunction_p(
+					targetAddress,
+					(void*)&hooked_QuestLiveHeartObject_PlayThrowAnimation,
+					(void**)&original_QuestLiveHeartObject_PlayThrowAnimation
+				);
+				NSLog(@"[IL2CPP Tweak] QuestLiveHeartObject::PlayThrowAnimation hooked");
+			}
+		}
+
+		if ([qualityConfig[@"Enable.QuestLive.NoCutinCharacterHook"] boolValue]) {
+			// Tecotec.QuestLive.Live.QuestLiveCutinCharacter.PlaySkillAnimation()
+			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+				"Tecotec.QuestLive.Live.QuestLiveCutinCharacter",
+				"PlaySkillAnimation",
+				0
+			);
+
+			if (targetAddress) {
+				MSHookFunction_p(
+					targetAddress,
+					(void*)&hooked_QuestLiveCutinCharacter_PlaySkillAnimation,
+					(void**)&original_QuestLiveCutinCharacter_PlaySkillAnimation
+				);
+				NSLog(@"[IL2CPP Tweak] QuestLiveCutinCharacter::PlaySkillAnimation hooked");
+			}
+		}
     }
     
     return result;
@@ -708,6 +781,9 @@ static void tweakConstructor() {
 		@true, @"Enable.FesCameraHook",
 		@true, @"Enable.FrameRateHook",
 		@true, @"Enable.AntiAliasingHook",
+		@true, @"Enable.QuestLive.NoParticlesHook",
+		@true, @"Enable.QuestLive.NoThrowAndWaitHook",
+		@true, @"Enable.QuestLive.NoCutinCharacterHook",
 		@false, @"Enable.FocusAreaDelimiterHook",
 		@false, @"Enable.LiveStreamCoverRemoverHook",
 		nil
