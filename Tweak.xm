@@ -374,88 +374,11 @@ void hooked_QuestLiveCutinCharacter_PlaySkillAnimation(void* self) {}
 // 	original_Client_ApiClient_Deserialize(self, response, returnType);
 // }
 
-Unity::il2cppMethodInfo* getMethodByName(const char* m_pClassName, const char* m_pMethodName) {
-	Unity::il2cppClass* m_pClass = IL2CPP::Class::Find(m_pClassName);
-	if (!m_pClass)
-		return nullptr;
-
-	void* m_pMethodIterator = nullptr;
-	Unity::il2cppMethodInfo* m_pMethod = nullptr;
-	while ((m_pMethod = IL2CPP::Class::GetMethods(m_pClass, &m_pMethodIterator)))
-	{
-		if (strcmp(m_pMethod->m_pName, m_pMethodName) == 0) {
-			return m_pMethod;
-		}
-	}
-	return nullptr;
-}
-
-IL2CPP::CClass* getMethodObject(Unity::il2cppMethodInfo* m_pMethod) {
-	return reinterpret_cast<IL2CPP::CClass*(IL2CPP_CALLING_CONVENTION)(Unity::il2cppMethodInfo*)>(IL2CPP::Functions.m_MethodGetObject)(m_pMethod);
-}
-
-Unity::il2cppMethodInfo* inflateGenericMethod(const char* m_pClassName, const char* m_pMethodName, std::initializer_list<const char*> m_vParamTypes) {
-	Unity::il2cppMethodInfo* genericMethod = getMethodByName(m_pClassName, m_pMethodName);
-	if (!genericMethod) {
-		NSLog(@"[IL2CPP Tweak] Failed to find method: %s::%s", m_pClassName, m_pMethodName);
-		return nullptr;
-	}
-	
-	void* makeGenericMethod = getMethodByName("System.Reflection.RuntimeMethodInfo", "MakeGenericMethod");
-	if (!makeGenericMethod) {
-		NSLog(@"[IL2CPP Tweak] Failed to find method: System.Reflection.RuntimeMethodInfo::MakeGenericMethod");
-		return nullptr;
-	}
-	
-	IL2CPP::CClass* genericMethodObject = getMethodObject(genericMethod);
-	if (!genericMethodObject) {
-		NSLog(@"[IL2CPP Tweak] Failed to get method object: %s::%s", m_pClassName, m_pMethodName);
-		return nullptr;
-	}
-
-	Unity::il2cppClass* typeClass = IL2CPP::Class::Find("System.Type");
-	Unity::il2cppArray<Unity::il2cppObject*>* typeArray = Unity::il2cppArray<Unity::il2cppObject*>::Create(typeClass, m_vParamTypes.size());
-
-	const char** m_pParamTypes = const_cast<const char**>(m_vParamTypes.begin());
-	for (int i = 0; i < static_cast<int>(m_vParamTypes.size()); i++) {
-		Unity::il2cppClass* paramClass = IL2CPP::Class::Find(m_pParamTypes[i]);
-		if (!paramClass) {
-			NSLog(@"[IL2CPP Tweak] Failed to find class: %s", m_pParamTypes[i]);
-		}
-		Unity::il2cppObject* type = IL2CPP::Class::GetSystemType(paramClass);
-		typeArray->At(i) = type;
-	}
-
-	IL2CPP::CClass* inflatedMethod = genericMethodObject->CallMethodSafe<IL2CPP::CClass*>(
-		"MakeGenericMethod",
-		typeArray
-	);
-	if (!inflatedMethod) {
-		NSLog(@"[IL2CPP Tweak] Failed to inflate method: %s::%s", m_pClassName, m_pMethodName);
-		return nullptr;
-	}
-
-	return reinterpret_cast<Unity::il2cppMethodInfo*>(inflatedMethod->GetMemberValue<intptr_t>("mhandle"));
-}
-
-void printMethods(const char* m_pClassName) {
-	Unity::il2cppClass* m_pClass = IL2CPP::Class::Find(m_pClassName);
-	if (!m_pClass)
-		return;
-
-	void* m_pMethodIterator = nullptr;
-	Unity::il2cppMethodInfo* m_pMethod = nullptr;
-	while ((m_pMethod = IL2CPP::Class::GetMethods(m_pClass, &m_pMethodIterator)))
-	{
-		NSLog(@"[IL2CPP Tweak] %@ Method %@", [[NSString alloc] initWithUTF8String:m_pClass->m_pName], [[NSString alloc] initWithUTF8String:m_pMethod->m_pName]);
-	}
-}
-
-// Hailstorm.AssetContainer.Load<UnityEngine.GameObject>(String address, bool enableCache)
+// Hailstorm.AssetContainer.Load<UnityEngine.Object>(String address, bool enableCache)
 typedef IL2CPP::CClass* (*original_AssetContainer_Load_t)(void* self, Unity::System_String* address, bool enableCache);
 original_AssetContainer_Load_t original_AssetContainer_Load = nullptr;
 IL2CPP::CClass* hooked_AssetContainer_Load(void* self, Unity::System_String* address, bool enableCache) {
-	IL2CPP::CClass* result = original_AssetContainer_Load(self, address, false);
+	IL2CPP::CClass* result = original_AssetContainer_Load(self, address, enableCache);
 	if (address && address->ToLength() > 0) {
 		NSString* nsAddress = address->ToNSString();
 		const char* className = result->m_Object.m_pClass->m_pName;
@@ -803,11 +726,11 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 			}
 		}
 
-		// Unity::il2cppMethodInfo* testInflate = inflateGenericMethod("Hailstorm.AssetContainer", "Load", {"UnityEngine.Object"});
-		// if (testInflate && testInflate->m_pMethodPointer) {
+		// targetAddress = IL2CPP::Helper::GetInflatedMethodPointer("Hailstorm.AssetContainer", "Load", {"UnityEngine.Object"}, {"String", "Boolean"});
+		// if (targetAddress) {
 		// 	NSLog(@"[IL2CPP Tweak] Hailstorm.AssetContainer::Load inflated");
 		// 	MSHookFunction_p(
-		// 		testInflate->m_pMethodPointer,
+		// 		targetAddress,
 		// 		(void*)&hooked_AssetContainer_Load,
 		// 		(void**)&original_AssetContainer_Load
 		// 	);
