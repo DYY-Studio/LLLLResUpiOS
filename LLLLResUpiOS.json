@@ -19,5 +19,6 @@
     "Enable.LiveStreamCoverRemoverHook": false,
     "Enable.QuestLive.NoParticlesHook": true,
     "Enable.QuestLive.NoThrowAndWaitHook": true,
-    "Enable.QuestLive.NoCutinCharacterHook": true
+    "Enable.QuestLive.NoCutinCharacterHook": true,
+    "Enable.LiveStream.NoAfterLimitationHook": true
 }
