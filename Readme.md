@@ -7,7 +7,7 @@ iOS17.4以上设备使用[SkitDebug](https://github.com/StephenDev0/StikDebug)�
 
 # 环境要求
 * LiveContainer (Launch with JIT)
-* iOS 14 - iOS 18.7
+* iOS 15 - iOS 18.7
 * iOS 26 因JIT尚未兼容，暂不受支持，请持续关注iOS 26 JIT开发进度
 
 # 支持功能
@@ -22,6 +22,7 @@ iOS17.4以上设备使用[SkitDebug](https://github.com/StephenDev0/StikDebug)�
 
 * Fes相机移动旋转限制解除
 * LiveStream遮挡图像移除
+* LiveStream解除AFTER限入
 * QuestLive性能优化
 
 # 使用方法
@@ -56,14 +57,15 @@ iOS17.4以上设备使用[SkitDebug](https://github.com/StephenDev0/StikDebug)�
 |`Enable.QuestLive.NoParticlesHook`|true| [QuestLive]| 关闭QuestLive心驻留时粒子效果 |
 |`Enable.QuestLive.NoThrowAndWaitHook` | true | [QuestLive] | 关闭QuestLive抛心与心驻留：性能影响最大 |
 |`Enable.QuestLive.NoCutinCharacterHook` | true | [QuestLive] | 关闭QuestLive发动技能时右侧角色切入 |
-|`Enable.LiveStreamQualityHook`|true| [全局]| 是否启用LiveStream质量调整钩子 |
-|`Enable.StoryQualityHook`|true| [全局]| 是否启用Story质量调整钩子 |
+|`Enable.LiveStreamQualityHook`|true| [LiveStream]| 是否启用LiveStream质量调整钩子 |
+|`Enable.StoryQualityHook`|true| [Story]| 是否启用Story质量调整钩子 |
 |`Enable.MagicaClothHook`|true| [全局]| 是否启用布料模拟调整钩子 |
-|`Enable.FesCameraHook`|true| [全局]| 是否启用FesCamera限制解除钩子：允许全向旋转和长距离移动 |
+|`Enable.FesCameraHook`|true| [LiveStream]| 是否启用FesCamera限制解除钩子：允许全向旋转和长距离移动 |
 |`Enable.FrameRateHook`|true| [全局]| 是否启用帧率修改钩子 |
 |`Enable.AntiAliasingHook`|true| [全局]| 是否启用抗锯齿修改钩子 |
-|`Enable.FocusAreaDelimiterHook`|false| [全局]| 是否启用Focus区域限制解除钩子：允许Focus区域外的角色 |
-|`Enable.LiveStreamCoverRemoverHook`|false| [全局] |是否启用LiveStream遮挡去除钩子：移除遮挡，强制显示模型 |
+| `Enable.LiveStream.NoAfterLimitationHook` | true | [LiveStream] | 是否启用AFTER限入解除钩子：白嫖AFTER |
+|`Enable.FocusAreaDelimiterHook`|false| [LiveStream]| 是否启用Focus区域限制解除钩子：允许Focus区域外的角色 |
+|`Enable.LiveStreamCoverRemoverHook`|false| [LiveStream] |是否启用LiveStream遮挡去除钩子：移除遮挡，强制显示模型 |
 
 # 许可证
 MIT
