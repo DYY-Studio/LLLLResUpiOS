@@ -375,17 +375,92 @@ void hooked_QuestLiveCutinCharacter_PlaySkillAnimation(void* self) {}
 // }
 
 // Hailstorm.AssetContainer.Load<UnityEngine.Object>(String address, bool enableCache)
-typedef IL2CPP::CClass* (*original_AssetContainer_Load_t)(void* self, Unity::System_String* address, bool enableCache);
-original_AssetContainer_Load_t original_AssetContainer_Load = nullptr;
-IL2CPP::CClass* hooked_AssetContainer_Load(void* self, Unity::System_String* address, bool enableCache) {
-	IL2CPP::CClass* result = original_AssetContainer_Load(self, address, enableCache);
-	if (address && address->ToLength() > 0) {
-		NSString* nsAddress = address->ToNSString();
-		const char* className = result->m_Object.m_pClass->m_pName;
-		NSLog(@"[IL2CPP Tweak] AssetContainer.Load: %@, %s", nsAddress, className);
-	}
+// typedef IL2CPP::CClass* (*original_AssetContainer_Load_t)(void* self, Unity::System_String* address, bool enableCache);
+// original_AssetContainer_Load_t original_AssetContainer_Load = nullptr;
+// IL2CPP::CClass* hooked_AssetContainer_Load(void* self, Unity::System_String* address, bool enableCache) {
+// 	IL2CPP::CClass* result = original_AssetContainer_Load(self, address, enableCache);
+// 	if (address && address->ToLength() > 0) {
+// 		NSString* nsAddress = address->ToNSString();
+// 		const char* className = result->m_Object.m_pClass->m_pName;
+// 		NSLog(@"[IL2CPP Tweak] AssetContainer.Load: %@, %s", nsAddress, className);
+// 	}
+// 	return result;
+// }
+
+struct MakeExtraAdmissionObservableReturn {
+	int extraAdmissionGiftStarCountThreshold;
+	bool HasExtraAdmission_k__BackingField;
+	bool hasExtra;
+};
+// (int, bool, bool) School.LiveMain.GiftPointModel::<MakeExtraAdmissionObservable>b__50_0(WithliveLiveInfoResponse response)
+typedef MakeExtraAdmissionObservableReturn (*original_GiftPointModel_MakeExtraAdmissionObservable_b_50_t)(void* self, IL2CPP::CClass* response);
+original_GiftPointModel_MakeExtraAdmissionObservable_b_50_t original_GiftPointModel_MakeExtraAdmissionObservable_b_50 = nullptr;
+MakeExtraAdmissionObservableReturn hooked_GiftPointModel_MakeExtraAdmissionObservable_b_50(void* self, IL2CPP::CClass* response) {
+	MakeExtraAdmissionObservableReturn result = original_GiftPointModel_MakeExtraAdmissionObservable_b_50(self, response);
+	result.HasExtraAdmission_k__BackingField = true;
 	return result;
 }
+
+// (int, bool, bool) School.LiveMain.GiftPointModel::<MakeExtraAdmissionObservable>b__51_0(FesliveLiveInfoResponse response)
+typedef MakeExtraAdmissionObservableReturn (*original_GiftPointModel_MakeExtraAdmissionObservable_b_51_t)(void* self, IL2CPP::CClass* response);
+original_GiftPointModel_MakeExtraAdmissionObservable_b_51_t original_GiftPointModel_MakeExtraAdmissionObservable_b_51 = nullptr;
+MakeExtraAdmissionObservableReturn hooked_GiftPointModel_MakeExtraAdmissionObservable_b_51(void* self, IL2CPP::CClass* response) {
+	MakeExtraAdmissionObservableReturn result = original_GiftPointModel_MakeExtraAdmissionObservable_b_51(self, response);
+	result.HasExtraAdmission_k__BackingField = true;
+	return result;
+}
+
+
+// void School.LiveMain.ChapterRecord..ctor(int chapterNo, string title, float startSeconds, bool isExtra)
+typedef void (*original_LiveMain_ChapterRecord_ctor_t)(void* self, int chapterNo, Unity::System_String* title, float startSeconds, bool isExtra);
+original_LiveMain_ChapterRecord_ctor_t original_LiveMain_ChapterRecord_ctor = nullptr;
+void hooked_LiveMain_ChapterRecord_ctor(void* self, int chapterNo, Unity::System_String* title, float startSeconds, bool isExtra) {
+	original_LiveMain_ChapterRecord_ctor(self, chapterNo, title, startSeconds, false);
+}
+
+// void School.LiveMain.LiveConnectChapterModel.UpdateAvailableChapterCount()
+typedef void (*original_LiveConnectChapterModel_UpdateAvailableChapterCount_t)(void* self);
+original_LiveConnectChapterModel_UpdateAvailableChapterCount_t original_LiveConnectChapterModel_UpdateAvailableChapterCount = nullptr;
+void hooked_LiveConnectChapterModel_UpdateAvailableChapterCount(void* self) {
+	IL2CPP::CClass* pSelf = reinterpret_cast<IL2CPP::CClass*>(self);
+
+	IL2CPP::CClass* chapters = pSelf->GetMemberValue<IL2CPP::CClass*>("chapters");
+	int chapterCount = pSelf->GetMemberValue<int>("<ChapterCount>k__BackingField");
+
+	if (!chapterCount) {
+		original_LiveConnectChapterModel_UpdateAvailableChapterCount(self);
+		return;
+	} else {
+		Unity::il2cppArray<IL2CPP::CClass*>* chaptersArray = reinterpret_cast<Unity::il2cppArray<IL2CPP::CClass*>*>(chapters);
+		NSString* title = chaptersArray->At(0)->GetMemberValue<Unity::System_String*>("Title")->ToNSString();
+		if ([title isEqualToString:@"The Very First"]) {
+			original_LiveConnectChapterModel_UpdateAvailableChapterCount(self);
+			return;
+		}
+	}
+
+	Unity::il2cppClass* chapterClass = IL2CPP::Class::Find("School.LiveMain.ChapterRecord");
+	Unity::il2cppArray<IL2CPP::CClass*>* newChapters = Unity::il2cppArray<IL2CPP::CClass*>::Create(chapterClass, chapterCount + 1);
+
+	chapters->CallMethodSafe<void>("CopyTo", newChapters, 1);
+
+	for (int i = 1; i < chapterCount + 1; i++) {
+		IL2CPP::CClass* chapter = newChapters->At(i);
+		const char* chapterNo = [[NSString stringWithFormat:@"%d", i + 1] UTF8String];
+		chapter->SetMemberValue<Unity::System_String*>("ChapterNo", IL2CPP::String::New(chapterNo));
+	}
+
+	IL2CPP::CClass* chapterToAdd = reinterpret_cast<IL2CPP::CClass*>(Unity::Object::New(chapterClass));
+	chapterToAdd->CallMethodSafe<void>(".ctor", 0, IL2CPP::String::New("The Very First"), 0.0f, false);
+
+	newChapters->At(0) = chapterToAdd;
+
+	pSelf->SetMemberValue<Unity::il2cppArray<IL2CPP::CClass*>*>("chapters", newChapters);
+	pSelf->SetMemberValue<int>("<ChapterCount>k__BackingField", chapterCount + 1);
+
+	original_LiveConnectChapterModel_UpdateAvailableChapterCount(self);
+}
+
 
 static BOOL (*original_didFinishLaunchingWithOptions)(id self, SEL _cmd, UIApplication *application, NSDictionary *launchOptions) = NULL;
 static BOOL hasHooked = false;
@@ -632,6 +707,15 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 				1
 			);
 
+			if (!targetAddress) {
+				// Changed in 4.8.0
+				targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+					"Inspix.Character.FootShadow.FootShadowManipulator",
+					"<SetupObserveProperty>b__16_0",
+					1
+				);
+			}
+
 			if (targetAddress) {
 				MSHookFunction_p(
 					targetAddress,
@@ -669,6 +753,22 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 					(void**)&original_FocusableCharacter_ctor_b50
 				);
 				NSLog(@"[IL2CPP Tweak] FocusableCharacter::<.ctor>b__5_0 hooked");
+			}
+
+			// void School.LiveMain.LiveConnectChapterModel.UpdateAvailableChapterCount()
+			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+				"School.LiveMain.LiveConnectChapterModel",
+				"UpdateAvailableChapterCount",
+				0
+			);
+
+			if (targetAddress) {
+				MSHookFunction_p(
+					targetAddress,
+					(void*)&hooked_LiveConnectChapterModel_UpdateAvailableChapterCount,
+					(void**)&original_LiveConnectChapterModel_UpdateAvailableChapterCount
+				);
+				NSLog(@"[IL2CPP Tweak] LiveConnectChapterModel::UpdateAvailableChapterCount hooked");
 			}
 		}
 
@@ -723,6 +823,56 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 					(void**)&original_QuestLiveCutinCharacter_PlaySkillAnimation
 				);
 				NSLog(@"[IL2CPP Tweak] QuestLiveCutinCharacter::PlaySkillAnimation hooked");
+			}
+		}
+
+		if ([qualityConfig[@"Enable.LiveStream.NoAfterLimitationHook"] boolValue]) {
+			// void School.LiveMain.ChapterRecord..ctor(int chapterNo, string title, float startSeconds, bool isExtra)
+			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+				"School.LiveMain.ChapterRecord",
+				".ctor",
+				4
+			);
+
+			if (targetAddress) {
+				MSHookFunction_p(
+					targetAddress,
+					(void*)&hooked_LiveMain_ChapterRecord_ctor,
+					(void**)&original_LiveMain_ChapterRecord_ctor
+				);
+				NSLog(@"[IL2CPP Tweak] LiveMain.ChapterRecord::.ctor hooked");
+			}
+
+			// (int, bool, bool) School.LiveMain.GiftPointModel::<MakeExtraAdmissionObservable>b__50_0(WithliveLiveInfoResponse response)
+			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+				"School.LiveMain.GiftPointModel",
+				"<MakeExtraAdmissionObservable>b__50_0",
+				1
+			);
+
+			if (targetAddress) {
+				MSHookFunction_p(
+					targetAddress,
+					(void*)&hooked_GiftPointModel_MakeExtraAdmissionObservable_b_50,
+					(void**)&original_GiftPointModel_MakeExtraAdmissionObservable_b_50
+				);
+				NSLog(@"[IL2CPP Tweak] GiftPointModel::<MakeExtraAdmissionObservable>b__50_0 hooked");
+			}
+
+			// (int, bool, bool) School.LiveMain.GiftPointModel::<MakeExtraAdmissionObservable>b__51_0(FesliveLiveInfoResponse response)
+			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+				"School.LiveMain.GiftPointModel",
+				"<MakeExtraAdmissionObservable>b__51_0",
+				1
+			);
+
+			if (targetAddress) {
+				MSHookFunction_p(
+					targetAddress,
+					(void*)&hooked_GiftPointModel_MakeExtraAdmissionObservable_b_51,
+					(void**)&original_GiftPointModel_MakeExtraAdmissionObservable_b_51
+				);
+				NSLog(@"[IL2CPP Tweak] GiftPointModel::<MakeExtraAdmissionObservable>b__51_0 hooked");
 			}
 		}
 
@@ -812,6 +962,7 @@ static void tweakConstructor() {
 		@true, @"Enable.QuestLive.NoParticlesHook",
 		@true, @"Enable.QuestLive.NoThrowAndWaitHook",
 		@true, @"Enable.QuestLive.NoCutinCharacterHook",
+		@true, @"Enable.LiveStream.NoAfterLimitationHook",
 		@false, @"Enable.FocusAreaDelimiterHook",
 		@false, @"Enable.LiveStreamCoverRemoverHook",
 		nil
