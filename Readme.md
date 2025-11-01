@@ -63,7 +63,8 @@ iOS17.4以上设备使用[SkitDebug](https://github.com/StephenDev0/StikDebug)�
 |`Enable.FesCameraHook`|true| [LiveStream]| 是否启用FesCamera限制解除钩子：允许全向旋转和长距离移动 |
 |`Enable.FrameRateHook`|true| [全局]| 是否启用帧率修改钩子 |
 |`Enable.AntiAliasingHook`|true| [全局]| 是否启用抗锯齿修改钩子 |
-| `Enable.LiveStream.NoAfterLimitationHook` | true | [LiveStream] | 是否启用AFTER限入解除钩子：白嫖AFTER |
+|`Enable.LiveStream.NoAfterLimitationHook` | true | [LiveStream] | 是否启用AFTER限入解除钩子：白嫖AFTER |
+|`Enable.LiveStream.NoFesCameraLimitationHook` | true | [LiveStream] | 是否启用Fes相机限制解除钩子：选择机位不受票种限制 |
 |`Enable.FocusAreaDelimiterHook`|false| [LiveStream]| 是否启用Focus区域限制解除钩子：允许Focus区域外的角色 |
 |`Enable.LiveStreamCoverRemoverHook`|false| [LiveStream] |是否启用LiveStream遮挡去除钩子：移除遮挡，强制显示模型 |
 

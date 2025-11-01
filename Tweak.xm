@@ -461,6 +461,61 @@ void hooked_LiveConnectChapterModel_UpdateAvailableChapterCount(void* self) {
 	original_LiveConnectChapterModel_UpdateAvailableChapterCount(self);
 }
 
+// School.LiveMain.CameraSelectModel+<>c__DisplayClass9_0.<.ctor>b__0
+typedef void (*original_LiveMain_CameraSelectModel_DisplayClass9_0_ctor_b_0_t)(void* self);
+original_LiveMain_CameraSelectModel_DisplayClass9_0_ctor_b_0_t original_LiveMain_CameraSelectModel_DisplayClass9_0_ctor_b_0 = nullptr;
+void hooked_LiveMain_CameraSelectModel_DisplayClass9_0_ctor_b_0(void* self) {}
+
+enum LiveTicketRank {
+	TicketRankGuest = 1,
+	TicketRankD,
+	TicketRankC,
+	TicketRankB,
+	TicketRankA,
+	TicketRankS,
+	TicketRankE
+};
+
+// void hook_doNothing() {}
+
+// School.LiveMain.CameraSelectModel(string liveId, IEnumerable<LiveCameraType> allowedCameraTypes, LiveCameraType selectedCameraType, IEnumerable<int> characterIds, int focusedCharacterId, LiveTicketRank ticketRank, LiveContentType contentType)
+typedef void (*original_CameraSelectModel_ctor_t)(void* self, Unity::System_String* liveId, IL2CPP::CClass* allowedCameraTypes, int selectedCameraType, IL2CPP::CClass* characterIds, int focusedCharacterId, LiveTicketRank ticketRank, int contentType);
+original_CameraSelectModel_ctor_t original_CameraSelectModel_ctor = nullptr;
+void hooked_CameraSelectModel_ctor(void* self, Unity::System_String* liveId, IL2CPP::CClass* allowedCameraTypes, int selectedCameraType, IL2CPP::CClass* characterIds, int focusedCharacterId, LiveTicketRank ticketRank, int contentType) {
+	// NSLog(@"[IL2CPP Tweak] CameraSelectModel::ctor called. %s", allowedCameraTypes->m_Object.m_pClass->m_pName);
+
+	if (ticketRank < TicketRankS) {
+		int cameraTypesCount = allowedCameraTypes->GetPropertyValue<int>("Count");
+		for (int i = cameraTypesCount + 1; i <= SchoolIdle; i++) {
+			int cameraType = i;
+			void* pCameraType = &cameraType;
+			allowedCameraTypes->CallMethodSafe<void>("Add", pCameraType);
+		}
+	}
+
+	original_CameraSelectModel_ctor(self, liveId, allowedCameraTypes, selectedCameraType, characterIds, focusedCharacterId, TicketRankS, contentType);
+
+	IL2CPP::CClass* pSelf = reinterpret_cast<IL2CPP::CClass*>(self);
+	IL2CPP::CClass* sendCameraStatus = pSelf->GetMemberValue<IL2CPP::CClass*>("sendCameraStatus");
+	void* methodAddr = sendCameraStatus->GetMemberValue<void*>("method_ptr");
+	if (methodAddr) {
+		MSHookFunction_p(
+			methodAddr,
+			(void*)&hooked_LiveMain_CameraSelectModel_DisplayClass9_0_ctor_b_0,
+			(void**)&original_LiveMain_CameraSelectModel_DisplayClass9_0_ctor_b_0
+		);
+		NSLog(@"[IL2CPP Tweak] CameraSelectModel.DisplayClass9_0.ctor_b_0 hooked.");
+	}
+}
+
+// School.LiveMain.CameraTypeSelectNodeView.UpdateContent(CameraTypeSelectNodeData nodeData)
+typedef void (*original_CameraTypeSelectNodeView_UpdateContent_t)(void* self, IL2CPP::CClass* nodeData);
+original_CameraTypeSelectNodeView_UpdateContent_t original_CameraTypeSelectNodeView_UpdateContent = nullptr;
+void hooked_CameraTypeSelectNodeView_UpdateContent(void* self, IL2CPP::CClass* nodeData) { 
+	// NSLog(@"[IL2CPP Tweak] CameraTypeSelectNodeView::UpdateContent called.");
+	nodeData->SetMemberValue<bool>("IsAllowed", true);
+	original_CameraTypeSelectNodeView_UpdateContent(self, nodeData);
+}
 
 static BOOL (*original_didFinishLaunchingWithOptions)(id self, SEL _cmd, UIApplication *application, NSDictionary *launchOptions) = NULL;
 static BOOL hasHooked = false;
@@ -876,6 +931,40 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 			}
 		}
 
+		if ([qualityConfig[@"Enable.LiveStream.NoFesCameraLimitationHook"] boolValue]) {
+			// School.LiveMain.CameraSelectModel(string liveId, IEnumerable<LiveCameraType> allowedCameraTypes, LiveCameraType selectedCameraType, IEnumerable<int> characterIds, int focusedCharacterId, LiveTicketRank ticketRank, LiveContentType contentType)
+			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+				"School.LiveMain.CameraSelectModel",
+				".ctor",
+				7
+			);
+
+			if (targetAddress) {
+				MSHookFunction_p(
+					targetAddress,
+					(void*)&hooked_CameraSelectModel_ctor,
+					(void**)&original_CameraSelectModel_ctor
+				);
+				NSLog(@"[IL2CPP Tweak] CameraSelectModel::.ctor hooked");
+			}
+
+			// School.LiveMain.CameraTypeSelectNodeView.UpdateContent(CameraTypeSelectNodeData nodeData)
+			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+				"School.LiveMain.CameraTypeSelectNodeView",
+				"UpdateContent",
+				1
+			);
+
+			if (targetAddress) {
+				MSHookFunction_p(
+					targetAddress,
+					(void*)&hooked_CameraTypeSelectNodeView_UpdateContent,
+					(void**)&original_CameraTypeSelectNodeView_UpdateContent
+				);
+				NSLog(@"[IL2CPP Tweak] CameraTypeSelectNodeView::UpdateContent hooked");
+			}
+		}
+
 		// targetAddress = IL2CPP::Helper::GetInflatedMethodPointer("Hailstorm.AssetContainer", "Load", {"UnityEngine.Object"}, {"String", "Boolean"});
 		// if (targetAddress) {
 		// 	NSLog(@"[IL2CPP Tweak] Hailstorm.AssetContainer::Load inflated");
@@ -963,6 +1052,7 @@ static void tweakConstructor() {
 		@true, @"Enable.QuestLive.NoThrowAndWaitHook",
 		@true, @"Enable.QuestLive.NoCutinCharacterHook",
 		@true, @"Enable.LiveStream.NoAfterLimitationHook",
+		@true, @"Enable.LiveStream.NoFesCameraLimitationHook",
 		@false, @"Enable.FocusAreaDelimiterHook",
 		@false, @"Enable.LiveStreamCoverRemoverHook",
 		nil
