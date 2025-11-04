@@ -1,4 +1,7 @@
 // Source: https://github.com/geode-sdk/ios-launcher
+// LINCENSE: GNU Affero General Public License v3.0 
+// 				https://github.com/LiveContainer/LiveContainer/blob/main/LICENSE 
+
 // Based on: https://blog.xpnsec.com/restoring-dyld-memory-loading
 // https://github.com/xpn/DyldDeNeuralyzer/blob/main/DyldDeNeuralyzer/DyldPatch/dyldpatch.m
 
