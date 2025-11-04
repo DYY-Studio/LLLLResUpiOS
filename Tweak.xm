@@ -343,9 +343,9 @@ void hooked_FesLiveSettingsView_InitButtons(void* self) {
 	// original_FesLiveSettingsView_InitButtons(self);
 	IL2CPP::CClass* pSelf = reinterpret_cast<IL2CPP::CClass*>(self);
 
-	pSelf->CallMethodSafe<void, IL2CPP::CClass*, int>("adioButtonToQualitySettings", pSelf->GetMemberValue<IL2CPP::CClass*>("qualityLowRadioButton"), 0);
-	pSelf->CallMethodSafe<void, IL2CPP::CClass*, int>("adioButtonToQualitySettings", pSelf->GetMemberValue<IL2CPP::CClass*>("qualityMiddleRadioButton"), 1);
-	pSelf->CallMethodSafe<void, IL2CPP::CClass*, int>("adioButtonToQualitySettings", pSelf->GetMemberValue<IL2CPP::CClass*>("qualityHighRadioButton"), 2);
+	pSelf->CallMethodSafe<void, IL2CPP::CClass*, int>("RadioButtonToQualitySettings", pSelf->GetMemberValue<IL2CPP::CClass*>("qualityLowRadioButton"), 0);
+	pSelf->CallMethodSafe<void, IL2CPP::CClass*, int>("RadioButtonToQualitySettings", pSelf->GetMemberValue<IL2CPP::CClass*>("qualityMiddleRadioButton"), 1);
+	pSelf->CallMethodSafe<void, IL2CPP::CClass*, int>("RadioButtonToQualitySettings", pSelf->GetMemberValue<IL2CPP::CClass*>("qualityHighRadioButton"), 2);
 
 	pSelf->GetMemberValue<IL2CPP::CClass*>("qualityLowRadioButton")->GetMemberValue<IL2CPP::CClass*>("label")->SetPropertyValue<Unity::System_String*>("text", IL2CPP::String::New(
 		[[NSString stringWithFormat:@"%dp\n%.2fx", 
