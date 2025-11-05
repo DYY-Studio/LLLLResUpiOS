@@ -2,7 +2,6 @@
 
 #include "IOS-Il2cppResolver/IL2CPP_Resolver.hpp"
 #include "txm_bypass.m"
-#include <libkern/OSCacheControl.h>
 #include <UIKit/UIApplication.h>
 
 static inline const char* IL2CPP_FRAMEWORK(const char* NAME) {
