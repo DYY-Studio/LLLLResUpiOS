@@ -21,5 +21,6 @@
     "Enable.QuestLive.NoThrowAndWaitHook": true,
     "Enable.QuestLive.NoCutinCharacterHook": true,
     "Enable.LiveStream.NoAfterLimitationHook": true,
-    "Enable.LiveStream.NoFesCameraLimitationHook": true
+    "Enable.LiveStream.NoFesCameraLimitationHook": true,
+    "Enable.NoOrientationHook": false
 }

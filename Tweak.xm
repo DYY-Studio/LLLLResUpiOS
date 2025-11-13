@@ -117,7 +117,7 @@ void loadConfig() {
 typedef void (*original_set_targetFrameRate_t)(int targetFrameRate);
 static original_set_targetFrameRate_t Original_set_targetFrameRate = nullptr;
 void set_targetFrameRateInternal(int targetFrameRate) {
-	reinterpret_cast<void (IL2CPP_CALLING_CONVENTION)(const char*)>(IL2CPP::Functions.m_ResolveFunction)("UnityEngine.Application::set_targetFrameRate(System.Int32)");
+	IL2CPP::ResolveCall("UnityEngine.Application::set_targetFrameRate(System.Int32)");
 }
 void Hooked_set_targetFrameRate(int targetFrameRate) {
     set_targetFrameRateInternal([qualityConfig[@"TargetFPS"] intValue]);
@@ -126,7 +126,7 @@ void Hooked_set_targetFrameRate(int targetFrameRate) {
 typedef void (*original_set_antiAliasing_t)(int antiAliasing);
 static original_set_antiAliasing_t Original_set_antiAliasing = nullptr;
 void set_antiAliasingInternal(int antiAliasing) {
-	reinterpret_cast<void (IL2CPP_CALLING_CONVENTION)(const char*)>(IL2CPP::Functions.m_ResolveFunction)("UnityEngine.QualitySettings::set_antiAliasing(System.Int32)");
+	IL2CPP::ResolveCall("UnityEngine.QualitySettings::set_antiAliasing(System.Int32)");
 }
 void Hooked_set_antiAliasing(int antiAliasing) {
     set_antiAliasingInternal([qualityConfig[@"AntiAliasingSamples"] intValue]);
@@ -338,7 +338,7 @@ void hooked_TitleSceneController_SetPlayerId(void* self, Unity::System_String* p
 }
 
 typedef void (*original_FesLiveSettingsView_InitButtons_t)(void* self);
-original_FesLiveSettingsView_InitButtons_t original_FesLiveSettingsView_InitButtons;
+original_FesLiveSettingsView_InitButtons_t original_FesLiveSettingsView_InitButtons = nullptr;
 void hooked_FesLiveSettingsView_InitButtons(void* self) { 
 	// original_FesLiveSettingsView_InitButtons(self);
 	IL2CPP::CClass* pSelf = reinterpret_cast<IL2CPP::CClass*>(self);
@@ -498,6 +498,24 @@ void hooked_CameraTypeSelectNodeView_UpdateContent(void* self, IL2CPP::CClass* n
 	// NSLog(@"[IL2CPP Tweak] CameraTypeSelectNodeView::UpdateContent called.");
 	nodeData->SetMemberValue<bool>("IsAllowed", true);
 	original_CameraTypeSelectNodeView_UpdateContent(self, nodeData);
+}
+
+// Inspix.PlayerGameViewUtilsImpl.SetPortraitImpl()
+void (*original_PlayerGameViewUtilsImpl_SetPortraitImpl)(void* self) = nullptr;
+void hooked_PlayerGameViewUtilsImpl_SetPortraitImpl(void* self) {
+	return;
+}
+
+// Inspix.PlayerGameViewUtilsImpl.SetLandscapeImpl()
+void (*original_PlayerGameViewUtilsImpl_SetLandscapeImpl)(void* self) = nullptr;
+void hooked_PlayerGameViewUtilsImpl_SetLandscapeImpl(void* self) {
+	return;
+}
+
+// Inspix.PlayerGameViewUtilsImpl.CurrentOrientationIsImpl()
+bool (*original_PlayerGameViewUtilsImpl_CurrentOrientationIsImpl)(void* self, int deviceOrientation) = nullptr;
+bool hooked_PlayerGameViewUtilsImpl_CurrentOrientationIsImpl(void* self, int deviceOrientation) {
+	return true;
 }
 
 static BOOL (*original_didFinishLaunchingWithOptions)(id self, SEL _cmd, UIApplication *application, NSDictionary *launchOptions) = NULL;
@@ -958,6 +976,56 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 				NSLog(@"[IL2CPP Tweak] CameraTypeSelectNodeView::UpdateContent hooked");
 			}
 		}
+
+		if ([qualityConfig[@"Enable.NoOrientationHook"] boolValue]) {
+			// Inspix.PlayerGameViewUtilsImpl.SetPortraitImpl()
+			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+				"Inspix.PlayerGameViewUtilsImpl",
+				"SetPortraitImpl",
+				0
+			);
+
+			if (targetAddress) {
+				MSHookFunction_p(
+					targetAddress,
+					(void*)&hooked_PlayerGameViewUtilsImpl_SetPortraitImpl,
+					(void**)&original_PlayerGameViewUtilsImpl_SetPortraitImpl
+				);
+				NSLog(@"[IL2CPP Tweak] PlayerGameViewUtilsImpl::SetPortraitImpl hooked");
+			}
+
+			// Inspix.PlayerGameViewUtilsImpl.SetLandscapeImpl()
+			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+				"Inspix.PlayerGameViewUtilsImpl",
+				"SetLandscapeImpl",
+				0
+			);
+
+			if (targetAddress) {
+				MSHookFunction_p(
+					targetAddress,
+					(void*)&hooked_PlayerGameViewUtilsImpl_SetLandscapeImpl,
+					(void**)&original_PlayerGameViewUtilsImpl_SetLandscapeImpl
+				);
+				NSLog(@"[IL2CPP Tweak] PlayerGameViewUtilsImpl::SetLandscapeImpl hooked");
+			}
+
+			// Inspix.PlayerGameViewUtilsImpl.CurrentOrientationIsImpl(int deviceOrientation)
+			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+				"Inspix.PlayerGameViewUtilsImpl",
+				"CurrentOrientationIsImpl",
+				1
+			);
+
+			if (targetAddress) {
+				MSHookFunction_p(
+					targetAddress,
+					(void*)&hooked_PlayerGameViewUtilsImpl_CurrentOrientationIsImpl,
+					(void**)&original_PlayerGameViewUtilsImpl_CurrentOrientationIsImpl
+				);
+				NSLog(@"[IL2CPP Tweak] PlayerGameViewUtilsImpl::CurrentOrientationIsImpl hooked");
+			}
+		}
     }
     
     return result;
@@ -965,14 +1033,22 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 
 void WaitForSymbolAndHook() {
     Class targetClass = NULL;
-    int maxAttempts = 50;
+	
+    int maxAttempts = 20;
     int attempts = 0;
 
-    while (targetClass == NULL && attempts < maxAttempts) {
+    while ((targetClass == NULL || !MSHookFunction_p) && attempts < maxAttempts) {
         targetClass = NSClassFromString(@"UnityAppController");
-        
-        if (targetClass == NULL) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+		if (!MSHookFunction_p) {
+			if (has_txm()) {
+				MSHookFunction_p = (MSHookFunction_t)dlsym(RTLD_DEFAULT, "DobbyHook");
+			} else {
+				MSHookFunction_p = (MSHookFunction_t)dlsym(RTLD_DEFAULT, "MSHookFunction");
+			}
+		}
+		
+        if (targetClass == NULL || !MSHookFunction_p) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             attempts++;
             NSLog(@"[IL2CPP Tweak] Attempt %d", attempts);
         }
@@ -981,6 +1057,14 @@ void WaitForSymbolAndHook() {
     if (targetClass == NULL) {
         NSLog(@"[IL2CPP Tweak] Failed to find UnityAppController.");
         return;
+    } else {
+		NSLog(@"[IL2CPP Tweak] Found UnityAppController.");
+	}
+	if (!MSHookFunction_p) {
+        NSLog(@"[IL2CPP Tweak] Failed to find MSHookFunction.");
+        return;
+    } else {
+        NSLog(@"[IL2CPP Tweak] Found MSHookFunction.");
     }
 
     MSHookMessageEx_p(
@@ -991,50 +1075,10 @@ void WaitForSymbolAndHook() {
     );
 }
 
-struct AbsoluteJumpPatch {
-    uint32_t ldr_x16;  // 0x58000050
-    uint32_t br_x16;   // 0xd61f0200
-    uint64_t address;  // 目标地址
-};
-
-void create_abs_jump(void* buffer, void* target) {
-    struct AbsoluteJumpPatch* patch = (struct AbsoluteJumpPatch*)buffer;
-    patch->ldr_x16 = 0x58000050; // LDR x16, 8 (literal load)
-    patch->br_x16 = 0xd61f0200;  // BR x16
-    patch->address = (uint64_t)target;
-}
-
-// 目前只有重定向，没有Original函数可以调用
-static void dummyMSHookFunction26(void *symbol, void *hook, void **old) {
-    const size_t detour_patch_size = sizeof(struct AbsoluteJumpPatch);
-
-    struct AbsoluteJumpPatch detourPatch;
-    create_abs_jump(&detourPatch, hook);
-
-    BreakJITWrite(symbol, &detourPatch, detour_patch_size);
-
-	sys_icache_invalidate((void*)symbol, detour_patch_size);
-
-    *old = nullptr;
-	// DobbyHook(symbol, hook, old);
-}
-
 __attribute__((constructor))
 static void tweakConstructor() {
 
     NSLog(@"[IL2CPP Tweak] Loaded.");
-
-	if (has_txm()) {
-		MSHookFunction_p = (MSHookFunction_t)dlsym(RTLD_DEFAULT, "DobbyHook");
-	} else {
-		MSHookFunction_p = (MSHookFunction_t)dlsym(RTLD_DEFAULT, "MSHookFunction");
-	}
-    if (!MSHookFunction_p) {
-        NSLog(@"[IL2CPP Tweak] Failed to find MSHookFunction.");
-        return;
-    } else {
-        NSLog(@"[IL2CPP Tweak] Found MSHookFunction.");
-    }
 
     MSHookMessageEx_p = (MSHookMessageEx_t)dlsym(RTLD_DEFAULT, "MSHookMessageEx");
     if (!MSHookMessageEx_p) {
@@ -1068,6 +1112,7 @@ static void tweakConstructor() {
 		@true, @"Enable.LiveStream.NoFesCameraLimitationHook",
 		@false, @"Enable.FocusAreaDelimiterHook",
 		@false, @"Enable.LiveStreamCoverRemoverHook",
+		@false, @"Enable.NoOrientationHook",
 		nil
 	];
 
