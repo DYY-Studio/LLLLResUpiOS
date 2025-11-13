@@ -22,5 +22,6 @@
     "Enable.QuestLive.NoCutinCharacterHook": true,
     "Enable.LiveStream.NoAfterLimitationHook": true,
     "Enable.LiveStream.NoFesCameraLimitationHook": true,
-    "Enable.NoOrientationHook": false
+    "Enable.NoOrientationHook": false,
+    "Enable.LandscapePopupSizeFixHook": false
 }

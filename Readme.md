@@ -80,8 +80,10 @@ iOS17.4以上设备使用[SkitDebug](https://github.com/StephenDev0/StikDebug)�
 |`Enable.FocusAreaDelimiterHook`|false| [LiveStream]| Focus区域限制解除：<br>允许Focus区域外的角色 |
 |`Enable.LiveStreamCoverRemoverHook`|false| [LiveStream] |LiveStream遮挡去除：<br>移除遮挡，强制显示模型 |
 ||||
-|`Enable.NoOrientationHook`| false | [全局] | 禁用旋转判断<br>（适用于iPad窗口化/台前调度）<br>（适用于macOS）<br>允许以神奇的窗口比例正常运行 | 
+|`Enable.NoOrientationHook`| *1 | [全局] | 禁用旋转请求与判断<br>（iPad窗口化/台前调度）<br>（macOS）<br>允许以神奇的窗口比例正常运行 | 
+|`Enable.LandscapePopupSizeFixHook`| *1 | [全局] | 修正横屏弹窗大小<br>（iPad窗口化/台前调度）<br>（macOS） |
 
+*1 对iPhone默认禁用(false)，其他默认启用(true)
 # 许可证
 MIT
 

@@ -512,10 +512,27 @@ void hooked_PlayerGameViewUtilsImpl_SetLandscapeImpl(void* self) {
 	return;
 }
 
-// Inspix.PlayerGameViewUtilsImpl.CurrentOrientationIsImpl()
+// Inspix.PlayerGameViewUtilsImpl.CurrentOrientationIsImpl(enum deviceOrientation)
 bool (*original_PlayerGameViewUtilsImpl_CurrentOrientationIsImpl)(void* self, int deviceOrientation) = nullptr;
 bool hooked_PlayerGameViewUtilsImpl_CurrentOrientationIsImpl(void* self, int deviceOrientation) {
 	return true;
+}
+
+// UniTask Inspix.LiveMain.BasePopup.OpenAsync()
+IL2CPP::CClass* (*original_LiveMain_BasePopup_OpenAsync)(void* self) = nullptr;
+IL2CPP::CClass* hooked_LiveMain_BasePopup_OpenAsync(void* self) {
+	float width = (float)IL2CPP::Helper::InvokeStaticMethod<int>(
+		"UnityEngine.Screen",
+		"get_width"
+	);
+	float height = (float)IL2CPP::Helper::InvokeStaticMethod<int>(
+		"UnityEngine.Screen",
+		"get_height"
+	);
+	NSLog(@"[IL2CPP Tweak] Screen size: %f x %f", width, height);
+	IL2CPP::CClass* pSelf = reinterpret_cast<IL2CPP::CClass*>(self);
+	pSelf->CallMethodSafe<void>("SetLandscapeScaleIfNeed", fmin(width, height) / fmax(width, height));
+	return original_LiveMain_BasePopup_OpenAsync(self);
 }
 
 static BOOL (*original_didFinishLaunchingWithOptions)(id self, SEL _cmd, UIApplication *application, NSDictionary *launchOptions) = NULL;
@@ -1026,6 +1043,24 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 				NSLog(@"[IL2CPP Tweak] PlayerGameViewUtilsImpl::CurrentOrientationIsImpl hooked");
 			}
 		}
+
+		if ([qualityConfig[@"Enable.LandscapePopupSizeFixHook"] boolValue]) {
+			// Inspix.LiveMain.BasePopup.OpenAsync()
+			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+				"Inspix.LiveMain.BasePopup",
+				"OpenAsync",
+				0
+			);
+
+			if (targetAddress) { 
+				MSHookFunction_p(
+					targetAddress,
+					(void*)&hooked_LiveMain_BasePopup_OpenAsync,
+					(void**)&original_LiveMain_BasePopup_OpenAsync
+				);
+				NSLog(@"[IL2CPP Tweak] BasePopup::OpenAsync hooked");
+			}
+		}
     }
     
     return result;
@@ -1113,8 +1148,15 @@ static void tweakConstructor() {
 		@false, @"Enable.FocusAreaDelimiterHook",
 		@false, @"Enable.LiveStreamCoverRemoverHook",
 		@false, @"Enable.NoOrientationHook",
+		@false, @"Enable.LandscapePopupSizeFixHook",
 		nil
 	];
+
+	if ([UIDevice currentDevice].userInterfaceIdiom > 0) {
+		[qualityConfig setObject:@true forKey:@"Enable.NoOrientationHook"];
+		[qualityConfig setObject:@true forKey:@"Enable.LandscapePopupSizeFixHook"];
+		NSLog(@"[IL2CPP Tweak] Running on device can be landscape");
+	}
 
 	loadConfig();
 
