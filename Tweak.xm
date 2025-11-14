@@ -529,9 +529,11 @@ IL2CPP::CClass* hooked_LiveMain_BasePopup_OpenAsync(void* self) {
 		"UnityEngine.Screen",
 		"get_height"
 	);
-	NSLog(@"[IL2CPP Tweak] Screen size: %f x %f", width, height);
-	IL2CPP::CClass* pSelf = reinterpret_cast<IL2CPP::CClass*>(self);
-	pSelf->CallMethodSafe<void>("SetLandscapeScaleIfNeed", fmin(width, height) / fmax(width, height));
+	if (width > height) {
+		// NSLog(@"[IL2CPP Tweak] Screen size: %f x %f", width, height);
+		IL2CPP::CClass* pSelf = reinterpret_cast<IL2CPP::CClass*>(self);
+		pSelf->CallMethodSafe<void>("SetLandscapeScaleIfNeed", height / width);
+	}
 	return original_LiveMain_BasePopup_OpenAsync(self);
 }
 
