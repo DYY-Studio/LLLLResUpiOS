@@ -24,14 +24,35 @@ static MSHookFunction_t MSHookFunction_p = NULL;
 typedef void (*MSHookMessageEx_t)(Class _class, SEL message, IMP hook, IMP *old);
 static MSHookMessageEx_t MSHookMessageEx_p = NULL;
 
+static NSMutableDictionary *qualityConfig = nil;
 struct Resolution { int width; int height; int refreshRate; };
 enum LiveAreaQuality { Low, Medium, High };
 enum LiveScreenOrientation { Landscape, Portrait };
-static NSMutableDictionary *qualityConfig = nil;
+
+IL2CPP::CClass* get_SaveData() {
+	void* instance = IL2CPP::Class::Utils::GetStaticField(
+		IL2CPP::Class::Find("Global"),
+		"instance"
+	);
+	IL2CPP::CClass* pInstance = reinterpret_cast<IL2CPP::CClass*>(instance);
+	return pInstance->GetPropertyValue<IL2CPP::CClass*>("SaveData");
+}
+
+LiveAreaQuality get_RenderTextureQuality() {
+	IL2CPP::CClass* saveData = get_SaveData();
+	return saveData->GetPropertyValue<LiveAreaQuality>("RenderTextureQuality");
+}
+
+void set_RenderTextureQuality(LiveAreaQuality quality) {
+	IL2CPP::CClass* saveData = get_SaveData();
+	saveData->SetPropertyValue<LiveAreaQuality>("RenderTextureQuality", quality);
+}
+
+static bool inAlphaBlend = false;
+static const float alphaBlendFactor = 2.0f/3.0f;
 
 typedef Resolution (*OriginalGetResolution_t)(LiveAreaQuality quality, LiveScreenOrientation orientation);
 static OriginalGetResolution_t Original_GetResolution = nullptr;
-
 Resolution Hooked_GetResolution(LiveAreaQuality quality, LiveScreenOrientation orientation)
 {
     Resolution customRes;
@@ -49,6 +70,10 @@ Resolution Hooked_GetResolution(LiveAreaQuality quality, LiveScreenOrientation o
 			shortSide = [qualityConfig[@"LiveStream.Quality.Low.ShortSide"] intValue];
 			longSide = floor(shortSide / 9.0f * 16.0f);
     }
+	if (inAlphaBlend) {
+		longSide = floor(longSide * alphaBlendFactor);
+		shortSide = floor(shortSide * alphaBlendFactor);
+	}
     switch (orientation) {
         case Landscape:
             customRes.width = longSide;
@@ -61,6 +86,19 @@ Resolution Hooked_GetResolution(LiveAreaQuality quality, LiveScreenOrientation o
     customRes.refreshRate = [qualityConfig[@"TargetFPS"] intValue];
     return customRes;
     // return Original_GetResolution(quality, orientation);
+}
+
+// Inspix.AlphaBlendCamera.UpdateAlpha(float newAlpha)
+void (*original_AlphaBlendCamera_UpdateAlpha)(void *self, float newAlpha);
+void hooked_AlphaBlendCamera_UpdateAlpha(void *self, float newAlpha) {
+    if (newAlpha < 1.0f && !inAlphaBlend) {
+		inAlphaBlend = true;
+		set_RenderTextureQuality(get_RenderTextureQuality());
+	} else if (newAlpha > 0.99f && inAlphaBlend) {
+		inAlphaBlend = false;
+		set_RenderTextureQuality(get_RenderTextureQuality());
+	}
+	original_AlphaBlendCamera_UpdateAlpha(self, newAlpha);
 }
 
 NSString *getDylibDirectoryPath() {
@@ -166,25 +204,6 @@ void Hooked_setFocusArea(void *self) {
 	pSelf->SetMemberValue<Unity::Vector3>("focusAreaMinValue", focusAreaMinValue);
 }
 
-IL2CPP::CClass* get_SaveData() {
-	void* instance = IL2CPP::Class::Utils::GetStaticField(
-		IL2CPP::Class::Find("Global"),
-		"instance"
-	);
-	IL2CPP::CClass* pInstance = reinterpret_cast<IL2CPP::CClass*>(instance);
-	return pInstance->GetPropertyValue<IL2CPP::CClass*>("SaveData");
-}
-
-LiveAreaQuality get_RenderTextureQuality() {
-	IL2CPP::CClass* saveData = get_SaveData();
-	return saveData->GetPropertyValue<LiveAreaQuality>("RenderTextureQuality");
-}
-
-void set_RenderTextureQuality(LiveAreaQuality quality) {
-	IL2CPP::CClass* saveData = get_SaveData();
-	saveData->SetPropertyValue<LiveAreaQuality>("RenderTextureQuality", quality);
-}
-
 struct RenderTextureDescriptor {
 	int width;
 	int height;
@@ -208,7 +227,7 @@ RenderTextureDescriptor Hooked_CreateRenderTextureDescriptor(Unity::CCamera* cam
 {
 	NSString* nsCameraName = camera->GetName()->ToNSString();
 	
-	if (nsCameraName || [nsCameraName hasPrefix:@"StoryCamera"]) {
+	if (nsCameraName && [nsCameraName hasPrefix:@"StoryCamera"]) {
 		IL2CPP::CClass* targetTexture = camera->GetPropertyValue<IL2CPP::CClass*>("targetTexture");
 		if (targetTexture) {
 			int width = targetTexture->GetPropertyValue<int>("width");
@@ -343,23 +362,27 @@ void hooked_FesLiveSettingsView_InitButtons(void* self) {
 	// original_FesLiveSettingsView_InitButtons(self);
 	IL2CPP::CClass* pSelf = reinterpret_cast<IL2CPP::CClass*>(self);
 
-	pSelf->CallMethodSafe<void, IL2CPP::CClass*, int>("RadioButtonToQualitySettings", pSelf->GetMemberValue<IL2CPP::CClass*>("qualityLowRadioButton"), 0);
-	pSelf->CallMethodSafe<void, IL2CPP::CClass*, int>("RadioButtonToQualitySettings", pSelf->GetMemberValue<IL2CPP::CClass*>("qualityMiddleRadioButton"), 1);
-	pSelf->CallMethodSafe<void, IL2CPP::CClass*, int>("RadioButtonToQualitySettings", pSelf->GetMemberValue<IL2CPP::CClass*>("qualityHighRadioButton"), 2);
+	IL2CPP::CClass* qualityLowRadioButton = pSelf->GetMemberValue<IL2CPP::CClass*>("qualityLowRadioButton");
+	IL2CPP::CClass* qualityMiddleRadioButton = pSelf->GetMemberValue<IL2CPP::CClass*>("qualityMiddleRadioButton");
+	IL2CPP::CClass* qualityHighRadioButton = pSelf->GetMemberValue<IL2CPP::CClass*>("qualityHighRadioButton");
 
-	pSelf->GetMemberValue<IL2CPP::CClass*>("qualityLowRadioButton")->GetMemberValue<IL2CPP::CClass*>("label")->SetPropertyValue<Unity::System_String*>("text", IL2CPP::String::New(
+	pSelf->CallMethodSafe<void, IL2CPP::CClass*, int>("RadioButtonToQualitySettings", qualityLowRadioButton, 0);
+	pSelf->CallMethodSafe<void, IL2CPP::CClass*, int>("RadioButtonToQualitySettings", qualityMiddleRadioButton, 1);
+	pSelf->CallMethodSafe<void, IL2CPP::CClass*, int>("RadioButtonToQualitySettings", qualityHighRadioButton, 2);
+
+	qualityLowRadioButton->GetMemberValue<IL2CPP::CClass*>("label")->SetPropertyValue<Unity::System_String*>("text", IL2CPP::String::New(
 		[[NSString stringWithFormat:@"%dp\n%.2fx", 
 			[qualityConfig[@"LiveStream.Quality.Low.ShortSide"] intValue],
 			[qualityConfig[@"Story.Quality.Low.Factor"] floatValue]
 			] UTF8String]
 	));
-	pSelf->GetMemberValue<IL2CPP::CClass*>("qualityMiddleRadioButton")->GetMemberValue<IL2CPP::CClass*>("label")->SetPropertyValue<Unity::System_String*>("text", IL2CPP::String::New(
+	qualityMiddleRadioButton->GetMemberValue<IL2CPP::CClass*>("label")->SetPropertyValue<Unity::System_String*>("text", IL2CPP::String::New(
 		[[NSString stringWithFormat:@"%dp\n%.2fx", 
 			[qualityConfig[@"LiveStream.Quality.Medium.ShortSide"] intValue],
 			[qualityConfig[@"Story.Quality.Medium.Factor"] floatValue]
 			] UTF8String]
 	));
-	pSelf->GetMemberValue<IL2CPP::CClass*>("qualityHighRadioButton")->GetMemberValue<IL2CPP::CClass*>("label")->SetPropertyValue<Unity::System_String*>("text", IL2CPP::String::New(
+	qualityHighRadioButton->GetMemberValue<IL2CPP::CClass*>("label")->SetPropertyValue<Unity::System_String*>("text", IL2CPP::String::New(
 		[[NSString stringWithFormat:@"%dp\n%.2fx", 
 			[qualityConfig[@"LiveStream.Quality.High.ShortSide"] intValue],
 			[qualityConfig[@"Story.Quality.High.Factor"] floatValue]
@@ -635,6 +658,22 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 			);
 
 			NSLog(@"[IL2CPP Tweak] Successfully hooked GetResolution!");
+
+			// Inspix.AlphaBlendCamera.UpdateAlpha(float newAlpha)
+			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+				"Inspix.AlphaBlendCamera",
+				"UpdateAlpha",
+				1
+			);
+
+			if (targetAddress) {
+				MSHookFunction_p(
+					targetAddress,
+					(void*)hooked_AlphaBlendCamera_UpdateAlpha,
+					(void**)&original_AlphaBlendCamera_UpdateAlpha
+				);
+				NSLog(@"[IL2CPP Tweak] AlphaBlendCamera::UpdateAlpha hooked");
+			}
 		}
 
 		targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
