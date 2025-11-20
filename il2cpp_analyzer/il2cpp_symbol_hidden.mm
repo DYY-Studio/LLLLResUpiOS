@@ -1,0 +1,96 @@
+#import <Foundation/Foundation.h>
+
+#include "MachO_Analyzer.hpp"
+
+static const char *il2cpp_init_symbol = "00 00 80 52 62 73 63 95 E0 03 13 AA C2 77 01 94";
+static const int il2cpp_init_symbol_offset = -0x18;
+
+static const NSDictionary *il2cpp_symbol_offsets = @{
+    @"il2cpp_init": @0x0,
+    @"il2cpp_class_from_name": @0xA8,
+    @"il2cpp_class_get_fields": @0xAC,
+    @"il2cpp_class_get_field_from_name": @0xB4,
+    @"il2cpp_class_get_methods": @0xB8,
+    @"il2cpp_class_get_method_from_name": @0x6163C, // Internal function
+    @"il2cpp_class_get_property_from_name": @-1,
+    @"il2cpp_class_get_nested_types": @0xB0,
+    @"il2cpp_class_get_type": @0x134,
+    @"il2cpp_domain_get": @0x15C,
+    @"il2cpp_domain_get_assemblies": @0x35E24, // no equivalent function, see System.AppDomain$$GetAssemblies_0
+    @"il2cpp_free": @0x68, // Mono.SafeStringMarshal$$GFree_0_0
+    @"il2cpp_image_get_class": @0x53C,
+    @"il2cpp_image_get_class_count": @0x524,
+    @"il2cpp_resolve_icall": @0x4B838, // Internal function
+    @"il2cpp_string_new": @0x39C,
+    @"il2cpp_thread_attach": @0x3B0,
+    @"il2cpp_thread_detach": @0x53120, // Internal function
+    @"il2cpp_type_get_object": @0x3B4,
+    @"il2cpp_object_new": @0x354,
+    @"il2cpp_method_get_object": @0x328,
+    @"il2cpp_method_get_param_name": @0x522F4, // Internal function
+    @"il2cpp_method_get_param": @0x340,
+    @"il2cpp_class_from_il2cpp_type": @0xA0,
+    @"il2cpp_field_static_get_value": @-1,
+    @"il2cpp_field_static_set_value": @-1,
+    @"il2cpp_array_class_get": @0x6C,
+    @"il2cpp_array_new": @0x74,
+    @"il2cpp_assembly_get_image": @0x84,
+    @"il2cpp_image_get_name": @-1
+};
+
+namespace DummyIL2CPP {
+    struct Il2CppAssemblyArray {
+        void** start;
+        void** end;
+    };
+    typedef Il2CppAssemblyArray* (*il2cpp_domain_get_assemblies_internal_t)(void* domain);
+    static il2cpp_domain_get_assemblies_internal_t il2cpp_domain_get_assemblies_internal = nullptr;
+    void** dummy_il2cpp_domain_get_assemblies(void* domain, int* size) {
+        Il2CppAssemblyArray* internalArray = il2cpp_domain_get_assemblies_internal(domain);
+        if (!internalArray) {
+            if (size) {
+                *size = 0;
+            }
+            return nullptr;
+        }
+
+        ptrdiff_t byteSize = (uint8_t*)internalArray->end - (uint8_t*)internalArray->start;
+        size_t count = (byteSize / sizeof(void*));
+
+        if (size) {
+            *size = count;
+        }
+
+        return internalArray->start;
+    }
+}
+
+static void testSearch(std::unordered_map<const char*, void*>& result_map) {
+    uintptr_t addr = locateFunctionBySignature("UnityFramework", std::string(il2cpp_init_symbol));
+    if (addr) {
+        NSLog(@"[IL2CPP] Found %p", (void *)addr);
+    } else {
+        NSLog(@"[IL2CPP] Failed to find %s", il2cpp_init_symbol);
+    }
+
+    unsigned char bytes[4];
+    memcpy(bytes, (void*)(addr + il2cpp_init_symbol_offset), 4);
+    // F4 4F BE A9
+    if (bytes[0] == 0xF4 && bytes[1] == 0x4F && bytes[2] == 0xBE && bytes[3] == 0xA9) {
+        NSLog(@"[IL2CPP] Checked %p", (void *)addr);
+    }
+
+    for (NSString *key in il2cpp_symbol_offsets) {
+        int offset = [il2cpp_symbol_offsets[key] intValue];
+        const char *key_cstr = key.UTF8String;
+        if (offset == -1) {
+            result_map[key_cstr] = nullptr;
+        } else if (strcmp([key UTF8String], "il2cpp_domain_get_assemblies") == 0) {
+            DummyIL2CPP::il2cpp_domain_get_assemblies_internal = reinterpret_cast<DummyIL2CPP::il2cpp_domain_get_assemblies_internal_t>(addr + offset + il2cpp_init_symbol_offset);
+            result_map[key_cstr] = (void*)DummyIL2CPP::dummy_il2cpp_domain_get_assemblies;
+        } else {
+            result_map[key_cstr] = (void*)(addr + offset + il2cpp_init_symbol_offset);
+            NSLog(@"[IL2CPP] %s at %p", key_cstr, result_map[key_cstr]);
+        }
+    }
+}
