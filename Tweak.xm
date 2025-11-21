@@ -4,7 +4,7 @@
 #include "IOS-Il2cppResolver/IL2CPP_Resolver.hpp"
 #include "txm_bypass.m"
 #include "il2cpp_analyzer/il2cpp_symbol_hidden.mm"
-#include <UIKit/UIApplication.h>
+#include <UIKit/UIKit.h>
 
 static inline const char* IL2CPP_FRAMEWORK(const char* NAME) {
         NSString *appPath = [[NSBundle mainBundle] bundlePath];
@@ -275,50 +275,57 @@ struct CameraData {
 	Unity::CCamera* baseCamera;
 };
 
-// void UnityEngine.Rendering.Universal.UniversalRenderPipeline.InitializeCameraData(Camera* camera, UniversalAdditionalCameraData* additionalCameraData, bool resolveFinalTarget, CameraData* cameraData)
-// static void (*original_InitializeCameraData)(Unity::CCamera* camera, IL2CPP::CClass *additionalCameraData, bool resolveFinalTarget, CameraData* cameraData)
-// void hooked_InitializeCameraData(Unity::CCamera* camera, IL2CPP::CClass *additionalCameraData, bool resolveFinalTarget, CameraData* cameraData) {
-// 	original_InitializeCameraData(camera, additionalCameraData, resolveFinalTarget, cameraData);
-// }
-
-// static NSString* storyCameraName = @"StoryCamera";
-typedef RenderTextureDescriptor (*original_CreateRenderTextureDescriptor62F2_t)(Unity::CCamera* camera, CameraData* cameraData, bool isHdrEnabled, int requestHDRColorBufferPrecision, int msaaSamples, bool needsAlpha, bool requiresOpaqueTexture);
-static original_CreateRenderTextureDescriptor62F2_t original_CreateRenderTextureDescriptor62F2 = nullptr;
-RenderTextureDescriptor Hooked_CreateRenderTextureDescriptor62F2(Unity::CCamera* camera, CameraData* cameraData, bool isHdrEnabled, int requestHDRColorBufferPrecision, int msaaSamples, bool needsAlpha, bool requiresOpaqueTexture) {
+// void UnityEngine.Rendering.Universal.UniversalRenderPipeline.InitializeStackedCameraData(Camera* camera, UniversalAdditionalCameraData* additionalCameraData, CameraData* cameraData)
+static void (*original_InitializeStackedCameraData)(Unity::CCamera*, IL2CPP::CClass*, CameraData*) = nullptr;
+void hooked_InitializeStackedCameraData(Unity::CCamera* camera, IL2CPP::CClass* additionalCameraData, CameraData* cameraData) {
 	Unity::System_String* cameraName = camera->GetName();
 	if (!cameraName) {
-		return original_CreateRenderTextureDescriptor62F2(camera, cameraData, isHdrEnabled, requestHDRColorBufferPrecision, msaaSamples, needsAlpha, requiresOpaqueTexture);
+		original_InitializeStackedCameraData(camera, additionalCameraData, cameraData);
+		return;
 	}
 	NSString* nsCameraName = cameraName->ToNSString();
 	
-	if (nsCameraName && [nsCameraName hasPrefix:@"StoryCamera"] && cameraData) {
-		IL2CPP::CClass* targetTexture = camera->GetPropertyValue<IL2CPP::CClass*>("targetTexture");
-		if (targetTexture) {
-			int width = targetTexture->GetPropertyValue<int>("width");
-			int height = targetTexture->GetPropertyValue<int>("height");
-
-			float storyFactor = 1.0f;
-			switch (get_RenderTextureQuality()) {
-				case Low:
-					storyFactor = [qualityConfig[@"Story.Quality.Low.Factor"] floatValue];
-					break;
-				case Medium:
-					storyFactor = [qualityConfig[@"Story.Quality.Medium.Factor"] floatValue];
-					break;
-				default:
-					storyFactor = [qualityConfig[@"Story.Quality.High.Factor"] floatValue];
-			}
-
-			targetTexture->SetPropertyValue<int>("width", floor(width * storyFactor));
-			targetTexture->SetPropertyValue<int>("height", floor(height * storyFactor));
-			
-			cameraData->renderScale = 1.0f;
-			if (qualityConfig[@"Enable.AntiAliasingHook"]) {
-				msaaSamples = [qualityConfig[@"AntiAliasingSamples"] intValue];
-			}
-		}
+	if (!nsCameraName || ![nsCameraName hasPrefix:@"StoryCamera"]) {
+		original_InitializeStackedCameraData(camera, additionalCameraData, cameraData);
+		return;
 	}
-	return original_CreateRenderTextureDescriptor62F2(camera, cameraData, isHdrEnabled, requestHDRColorBufferPrecision, msaaSamples, needsAlpha, requiresOpaqueTexture);
+
+	IL2CPP::CClass* targetTexture = camera->GetPropertyValue<IL2CPP::CClass*>("targetTexture");
+	if (!targetTexture) {
+		original_InitializeStackedCameraData(camera, additionalCameraData, cameraData);
+		return;
+	}
+
+	int width = targetTexture->GetPropertyValue<int>("width");
+	int height = targetTexture->GetPropertyValue<int>("height");
+
+	float storyFactor = 1.0f;
+	switch (get_RenderTextureQuality()) {
+		case Low:
+			storyFactor = [qualityConfig[@"Story.Quality.Low.Factor"] floatValue];
+			break;
+		case Medium:
+			storyFactor = [qualityConfig[@"Story.Quality.Medium.Factor"] floatValue];
+			break;
+		default:
+			storyFactor = [qualityConfig[@"Story.Quality.High.Factor"] floatValue];
+	}
+
+	if ([qualityConfig[@"Enable.AntiAliasingHook"] boolValue]) {
+		targetTexture->SetPropertyValue<int>("antiAliasing", [qualityConfig[@"AntiAliasingSamples"] intValue]);
+	}
+
+	if (![qualityConfig[@"Story.Quality.FSRUpscaling.Enable"] boolValue]) {
+		targetTexture->SetPropertyValue<int>("width", floor(width * storyFactor));
+		targetTexture->SetPropertyValue<int>("height", floor(height * storyFactor));
+	}
+	
+	original_InitializeStackedCameraData(camera, additionalCameraData, cameraData);
+
+	if ([qualityConfig[@"Story.Quality.FSRUpscaling.Enable"] boolValue]) {
+		cameraData->renderScale = storyFactor;
+		cameraData->imageScalingMode = 2;
+	}
 }
 
 typedef RenderTextureDescriptor (*original_CreateRenderTextureDescriptor_t)(Unity::CCamera* camera, float renderScale, bool isHdrEnabled, int msaaSamples, bool needsAlpha, bool requiresOpaqueTexture);
@@ -352,9 +359,9 @@ RenderTextureDescriptor Hooked_CreateRenderTextureDescriptor(Unity::CCamera* cam
 				targetTexture->SetPropertyValue<int>("width", floor(width * storyFactor));
 				targetTexture->SetPropertyValue<int>("height", floor(height * storyFactor));
 				targetTexture->SetPropertyValue<int>("antiAliasing", [qualityConfig[@"AntiAliasingSamples"] intValue]);
-				targetTexture->SetPropertyValue<bool>("autoGenerateMips", true);
-				targetTexture->SetPropertyValue<bool>("useMipMap", true);
-				targetTexture->SetPropertyValue<bool>("useDynamicScale", true);
+				// targetTexture->SetPropertyValue<bool>("autoGenerateMips", true);
+				// targetTexture->SetPropertyValue<bool>("useMipMap", true);
+				// targetTexture->SetPropertyValue<bool>("useDynamicScale", true);
 			}
 		}
 	}
@@ -898,19 +905,20 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 				NSLog(@"[IL2CPP Tweak] Successfully hooked CreateRenderTextureDescriptor!");
 			}
 		} else {
+			// // void UnityEngine.Rendering.Universal.UniversalRenderPipeline.InitializeStackedCameraData(Camera* camera, UniversalAdditionalCameraData* additionalCameraData, CameraData* cameraData)
 			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
 				"UnityEngine.Rendering.Universal.UniversalRenderPipeline",
-				"CreateRenderTextureDescriptor",
-				7
+				"InitializeStackedCameraData",
+				3
 			);
 
 			if (targetAddress) {
 				MSHookFunction_p(
 					targetAddress,
-					(void*)Hooked_CreateRenderTextureDescriptor62F2,
-					(void**)&original_CreateRenderTextureDescriptor62F2
+					(void*)hooked_InitializeStackedCameraData,
+					(void**)&original_InitializeStackedCameraData
 				);
-				NSLog(@"[IL2CPP Tweak] Successfully hooked CreateRenderTextureDescriptor 2022.3.62F2!");
+				NSLog(@"[IL2CPP Tweak] Successfully hooked InitializeStackedCameraData 2022.3.62F2!");
 			}
 		}
 	}
@@ -1313,8 +1321,9 @@ static void tweakConstructor() {
 		@1440, @"LiveStream.Quality.Medium.ShortSide",
 		@2160, @"LiveStream.Quality.High.ShortSide",
 		@1.0f, @"Story.Quality.Low.Factor",
-		@1.2f, @"Story.Quality.Medium.Factor",
-		@1.6f, @"Story.Quality.High.Factor",
+		@1.4f, @"Story.Quality.Medium.Factor",
+		@1.8f, @"Story.Quality.High.Factor",
+		@false, @"Story.Quality.FSRUpscaling.Enable",
 		@120, @"MagicaCloth.SimulationFrequency",
 		@5, @"MagicaCloth.MaxSimulationCountPerFrame",
 		@60, @"TargetFPS",
@@ -1342,6 +1351,9 @@ static void tweakConstructor() {
 		[qualityConfig setObject:@true forKey:@"Enable.LandscapePopupSizeFixHook"];
 		NSLog(@"[IL2CPP Tweak] Running on device can be landscape");
 	}
+
+	screenNativeBounds = [[UIScreen mainScreen] nativeBounds].size; // Portrait
+	screenRatio = screenNativeBounds.height / screenNativeBounds.width;
 
 	loadConfig();
 
