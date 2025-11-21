@@ -449,16 +449,11 @@ void hooked_TitleSceneController_SetPlayerId(void* self, Unity::System_String* p
 typedef void (*original_FesLiveSettingsView_InitButtons_t)(void* self);
 original_FesLiveSettingsView_InitButtons_t original_FesLiveSettingsView_InitButtons = nullptr;
 void hooked_FesLiveSettingsView_InitButtons(void* self) { 
-	original_FesLiveSettingsView_InitButtons(self);
 	IL2CPP::CClass* pSelf = reinterpret_cast<IL2CPP::CClass*>(self);
 
 	IL2CPP::CClass* qualityLowRadioButton = pSelf->GetMemberValue<IL2CPP::CClass*>("qualityLowRadioButton");
 	IL2CPP::CClass* qualityMiddleRadioButton = pSelf->GetMemberValue<IL2CPP::CClass*>("qualityMiddleRadioButton");
 	IL2CPP::CClass* qualityHighRadioButton = pSelf->GetMemberValue<IL2CPP::CClass*>("qualityHighRadioButton");
-
-	// pSelf->CallMethodSafe<void, IL2CPP::CClass*, int>("RadioButtonToQualitySettings", qualityLowRadioButton, 0);
-	// pSelf->CallMethodSafe<void, IL2CPP::CClass*, int>("RadioButtonToQualitySettings", qualityMiddleRadioButton, 1);
-	// pSelf->CallMethodSafe<void, IL2CPP::CClass*, int>("RadioButtonToQualitySettings", qualityHighRadioButton, 2);
 
 	qualityLowRadioButton->GetMemberValue<IL2CPP::CClass*>("label")->SetPropertyValue<Unity::System_String*>("text", IL2CPP::String::New(
 		[[NSString stringWithFormat:@"%dp\n%.2fx", 
@@ -478,6 +473,8 @@ void hooked_FesLiveSettingsView_InitButtons(void* self) {
 			[qualityConfig[@"Story.Quality.High.Factor"] floatValue]
 			] UTF8String]
 	));
+
+	original_FesLiveSettingsView_InitButtons(self);
 }
 
 // Tecotec.QuestLive.Live.QuestLiveHeartObject.PlayThrowAnimation
@@ -804,7 +801,7 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 		NSLog(@"[IL2CPP Tweak] Successfully hooked set_targetFrameRate!");
 	}
 
-	if (qualityConfig[@"Enable.LiveStreamQualityHook"] && qualityConfig[@"Enable.StoryQualityHook"]) {
+	if (!Unity2022_3_62F && qualityConfig[@"Enable.LiveStreamQualityHook"] && qualityConfig[@"Enable.StoryQualityHook"]) {
 		targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
 			"Tecotec.FesLiveSettingsView",
 			"InitButtons",
