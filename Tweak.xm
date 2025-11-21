@@ -275,6 +275,12 @@ struct CameraData {
 	Unity::CCamera* baseCamera;
 };
 
+// void UnityEngine.Rendering.Universal.UniversalRenderPipeline.InitializeCameraData(Camera* camera, UniversalAdditionalCameraData* additionalCameraData, bool resolveFinalTarget, CameraData* cameraData)
+// static void (*original_InitializeCameraData)(Unity::CCamera* camera, IL2CPP::CClass *additionalCameraData, bool resolveFinalTarget, CameraData* cameraData)
+// void hooked_InitializeCameraData(Unity::CCamera* camera, IL2CPP::CClass *additionalCameraData, bool resolveFinalTarget, CameraData* cameraData) {
+// 	original_InitializeCameraData(camera, additionalCameraData, resolveFinalTarget, cameraData);
+// }
+
 // static NSString* storyCameraName = @"StoryCamera";
 typedef RenderTextureDescriptor (*original_CreateRenderTextureDescriptor62F2_t)(Unity::CCamera* camera, CameraData* cameraData, bool isHdrEnabled, int requestHDRColorBufferPrecision, int msaaSamples, bool needsAlpha, bool requiresOpaqueTexture);
 static original_CreateRenderTextureDescriptor62F2_t original_CreateRenderTextureDescriptor62F2 = nullptr;
@@ -286,20 +292,30 @@ RenderTextureDescriptor Hooked_CreateRenderTextureDescriptor62F2(Unity::CCamera*
 	NSString* nsCameraName = cameraName->ToNSString();
 	
 	if (nsCameraName && [nsCameraName hasPrefix:@"StoryCamera"] && cameraData) {
-		float storyFactor = 1.0f;
-		switch (get_RenderTextureQuality()) {
-			case Low:
-				storyFactor = [qualityConfig[@"Story.Quality.Low.Factor"] floatValue];
-				break;
-			case Medium:
-				storyFactor = [qualityConfig[@"Story.Quality.Medium.Factor"] floatValue];
-				break;
-			default:
-				storyFactor = [qualityConfig[@"Story.Quality.High.Factor"] floatValue];
-		}
-		cameraData->renderScale = storyFactor;
-		if (qualityConfig[@"Enable.AntiAliasingHook"]) {
-			msaaSamples = [qualityConfig[@"AntiAliasingSamples"] intValue];
+		IL2CPP::CClass* targetTexture = camera->GetPropertyValue<IL2CPP::CClass*>("targetTexture");
+		if (targetTexture) {
+			int width = targetTexture->GetPropertyValue<int>("width");
+			int height = targetTexture->GetPropertyValue<int>("height");
+
+			float storyFactor = 1.0f;
+			switch (get_RenderTextureQuality()) {
+				case Low:
+					storyFactor = [qualityConfig[@"Story.Quality.Low.Factor"] floatValue];
+					break;
+				case Medium:
+					storyFactor = [qualityConfig[@"Story.Quality.Medium.Factor"] floatValue];
+					break;
+				default:
+					storyFactor = [qualityConfig[@"Story.Quality.High.Factor"] floatValue];
+			}
+
+			targetTexture->SetPropertyValue<int>("width", floor(width * storyFactor));
+			targetTexture->SetPropertyValue<int>("height", floor(height * storyFactor));
+			
+			cameraData->renderScale = 1.0f;
+			if (qualityConfig[@"Enable.AntiAliasingHook"]) {
+				msaaSamples = [qualityConfig[@"AntiAliasingSamples"] intValue];
+			}
 		}
 	}
 	return original_CreateRenderTextureDescriptor62F2(camera, cameraData, isHdrEnabled, requestHDRColorBufferPrecision, msaaSamples, needsAlpha, requiresOpaqueTexture);
