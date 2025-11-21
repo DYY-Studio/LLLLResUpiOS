@@ -226,9 +226,13 @@ struct RenderTextureDescriptor {
 // static NSString* storyCameraName = @"StoryCamera";
 typedef RenderTextureDescriptor (*original_CreateRenderTextureDescriptor_t)(IL2CPP::CClass* camera, float renderScale, bool isHdrEnabled, int msaaSamples, bool needsAlpha, bool requiresOpaqueTexture);
 static original_CreateRenderTextureDescriptor_t original_CreateRenderTextureDescriptor = nullptr;
-RenderTextureDescriptor Hooked_CreateRenderTextureDescriptor(Unity::CCamera* camera, float renderScale, bool isHdrEnabled, int msaaSamples, bool needsAlpha, bool requiresOpaqueTexture)
+RenderTextureDescriptor Hooked_CreateRenderTextureDescriptor(IL2CPP::CClass* camera, float renderScale, bool isHdrEnabled, int msaaSamples, bool needsAlpha, bool requiresOpaqueTexture)
 {
-	NSString* nsCameraName = camera->GetName()->ToNSString();
+	Unity::System_String* cameraName = camera->CallMethodSafe<Unity::System_String*>("ToString");
+	if (!cameraName) {
+		return original_CreateRenderTextureDescriptor(camera, renderScale, isHdrEnabled, msaaSamples, needsAlpha, requiresOpaqueTexture);
+	}
+	NSString* nsCameraName = cameraName->ToNSString();
 	
 	if (nsCameraName && [nsCameraName hasPrefix:@"StoryCamera"]) {
 		IL2CPP::CClass* targetTexture = camera->GetPropertyValue<IL2CPP::CClass*>("targetTexture");
@@ -342,7 +346,8 @@ original_TitleSceneController_SetPlayerId_t original_TitleSceneController_SetPla
 void hooked_TitleSceneController_SetPlayerId(void* self, Unity::System_String* playerId) {
 	if (playerId && playerId->ToLength() > 0) {
 		NSString* nsPlayerId = playerId->ToNSString();
-		const char* playerIdStr = [[@"ID " stringByAppendingString:[nsPlayerId stringByAppendingString:@" HOOKED"]] UTF8String];
+		// const char* playerIdStr = [[@"ID " stringByAppendingString:[nsPlayerId stringByAppendingString:@" HOOKED"]] UTF8String];
+		const char* playerIdStr = [[nsPlayerId stringByAppendingString:@" HOOKED"] UTF8String];
 		playerId = IL2CPP::String::New(playerIdStr);
 	} else {
 		playerId = IL2CPP::String::New("NO_LOGIN HOOKED");
@@ -351,10 +356,10 @@ void hooked_TitleSceneController_SetPlayerId(void* self, Unity::System_String* p
 	if (_view) {
 		IL2CPP::CClass* playerIdLabel = _view->GetMemberValue<IL2CPP::CClass*>("playerIdLabel");
 		if (playerIdLabel) {
-			playerIdLabel->SetMemberValue<Unity::System_String*>("m_text", playerId);
-			playerIdLabel->SetMemberValue<int>("m_overflowMode", 0);
-			playerIdLabel->SetMemberValue<bool>("m_enableWordWrapping", false);
-			return;
+			// playerIdLabel->SetPropertyValue<Unity::System_String*>("text", playerId);
+			playerIdLabel->SetPropertyValue<int>("overflowMode", 0);
+			playerIdLabel->SetPropertyValue<bool>("enableWordWrapping", false);
+			// return;
 		}
 	} 
 	original_TitleSceneController_SetPlayerId(self, playerId);
@@ -363,30 +368,30 @@ void hooked_TitleSceneController_SetPlayerId(void* self, Unity::System_String* p
 typedef void (*original_FesLiveSettingsView_InitButtons_t)(void* self);
 original_FesLiveSettingsView_InitButtons_t original_FesLiveSettingsView_InitButtons = nullptr;
 void hooked_FesLiveSettingsView_InitButtons(void* self) { 
-	// original_FesLiveSettingsView_InitButtons(self);
+	original_FesLiveSettingsView_InitButtons(self);
 	IL2CPP::CClass* pSelf = reinterpret_cast<IL2CPP::CClass*>(self);
 
 	IL2CPP::CClass* qualityLowRadioButton = pSelf->GetMemberValue<IL2CPP::CClass*>("qualityLowRadioButton");
 	IL2CPP::CClass* qualityMiddleRadioButton = pSelf->GetMemberValue<IL2CPP::CClass*>("qualityMiddleRadioButton");
 	IL2CPP::CClass* qualityHighRadioButton = pSelf->GetMemberValue<IL2CPP::CClass*>("qualityHighRadioButton");
 
-	pSelf->CallMethodSafe<void, IL2CPP::CClass*, int>("RadioButtonToQualitySettings", qualityLowRadioButton, 0);
-	pSelf->CallMethodSafe<void, IL2CPP::CClass*, int>("RadioButtonToQualitySettings", qualityMiddleRadioButton, 1);
-	pSelf->CallMethodSafe<void, IL2CPP::CClass*, int>("RadioButtonToQualitySettings", qualityHighRadioButton, 2);
+	// pSelf->CallMethodSafe<void, IL2CPP::CClass*, int>("RadioButtonToQualitySettings", qualityLowRadioButton, 0);
+	// pSelf->CallMethodSafe<void, IL2CPP::CClass*, int>("RadioButtonToQualitySettings", qualityMiddleRadioButton, 1);
+	// pSelf->CallMethodSafe<void, IL2CPP::CClass*, int>("RadioButtonToQualitySettings", qualityHighRadioButton, 2);
 
-	qualityLowRadioButton->GetMemberValue<IL2CPP::CClass*>("label")->SetMemberValue<Unity::System_String*>("m_text", IL2CPP::String::New(
+	qualityLowRadioButton->GetMemberValue<IL2CPP::CClass*>("label")->SetPropertyValue<Unity::System_String*>("text", IL2CPP::String::New(
 		[[NSString stringWithFormat:@"%dp\n%.2fx", 
 			[qualityConfig[@"LiveStream.Quality.Low.ShortSide"] intValue],
 			[qualityConfig[@"Story.Quality.Low.Factor"] floatValue]
 			] UTF8String]
 	));
-	qualityMiddleRadioButton->GetMemberValue<IL2CPP::CClass*>("label")->SetMemberValue<Unity::System_String*>("m_text", IL2CPP::String::New(
+	qualityMiddleRadioButton->GetMemberValue<IL2CPP::CClass*>("label")->SetPropertyValue<Unity::System_String*>("text", IL2CPP::String::New(
 		[[NSString stringWithFormat:@"%dp\n%.2fx", 
 			[qualityConfig[@"LiveStream.Quality.Medium.ShortSide"] intValue],
 			[qualityConfig[@"Story.Quality.Medium.Factor"] floatValue]
 			] UTF8String]
 	));
-	qualityHighRadioButton->GetMemberValue<IL2CPP::CClass*>("label")->SetMemberValue<Unity::System_String*>("m_text", IL2CPP::String::New(
+	qualityHighRadioButton->GetMemberValue<IL2CPP::CClass*>("label")->SetPropertyValue<Unity::System_String*>("text", IL2CPP::String::New(
 		[[NSString stringWithFormat:@"%dp\n%.2fx", 
 			[qualityConfig[@"LiveStream.Quality.High.ShortSide"] intValue],
 			[qualityConfig[@"Story.Quality.High.Factor"] floatValue]
@@ -652,20 +657,20 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 		}
 	}
 
-	// targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
-	// 	"Tecotec.TitleSceneController",
-	// 	"SetPlayerId",
-	// 	1
-	// );
+	targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+		"Tecotec.TitleSceneController",
+		"SetPlayerId",
+		1
+	);
 
-	// if (targetAddress){
-	// 	MSHookFunction_p(
-	// 		targetAddress,
-	// 		(void*)hooked_TitleSceneController_SetPlayerId,
-	// 		(void**)&original_TitleSceneController_SetPlayerId
-	// 	); 
-	// 	NSLog(@"[IL2CPP Tweak] TitleSceneController::SetPlayerId hooked");
-	// }
+	if (targetAddress){
+		MSHookFunction_p(
+			targetAddress,
+			(void*)hooked_TitleSceneController_SetPlayerId,
+			(void**)&original_TitleSceneController_SetPlayerId
+		); 
+		NSLog(@"[IL2CPP Tweak] TitleSceneController::SetPlayerId hooked");
+	}
 
 	targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
 		"School.LiveMain.SchoolResolution",

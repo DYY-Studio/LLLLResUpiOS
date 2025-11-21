@@ -12,7 +12,7 @@ static const NSDictionary *il2cpp_symbol_offsets = @{
     @"il2cpp_class_get_field_from_name": @0xB4,
     @"il2cpp_class_get_methods": @0xB8,
     @"il2cpp_class_get_method_from_name": @0x6163C, // Internal function
-    @"il2cpp_class_get_property_from_name": @-1,
+    @"il2cpp_class_get_property_from_name": @0x61878, // no equivalent function, offset of il2cpp_class_get_properties internal
     @"il2cpp_class_get_nested_types": @0xB0,
     @"il2cpp_class_get_type": @0x134,
     @"il2cpp_domain_get": @0x15C,
@@ -39,6 +39,32 @@ static const NSDictionary *il2cpp_symbol_offsets = @{
 };
 
 namespace DummyIL2CPP {
+    typedef Unity::il2cppPropertyInfo* (*il2cpp_class_get_properties_internal_t)(Unity::il2cppClass* klass, void* iter);
+    static il2cpp_class_get_properties_internal_t il2cpp_class_get_properties_internal = nullptr;
+    Unity::il2cppPropertyInfo* dummy_il2cpp_class_get_property_from_name(Unity::il2cppClass* klass, const char* name) {
+        if (klass == nullptr) {
+            return nullptr; 
+        }
+        Unity::il2cppClass* current_klass = klass; 
+
+        while (current_klass != nullptr) {
+            void* property_iterator = nullptr; 
+            
+            Unity::il2cppPropertyInfo* prop = nullptr;
+            while ((prop = il2cpp_class_get_properties_internal(current_klass, &property_iterator)) != nullptr) {
+                const char* property_name = prop->m_pName;
+            
+                if (strcmp(property_name, name) == 0) {
+                    return prop;
+                }
+            }
+
+            current_klass = current_klass->m_pParentClass; 
+        }
+
+        return nullptr;
+    }
+
     struct Il2CppAssemblyArray {
         void** start;
         void** end;
@@ -85,9 +111,15 @@ static void testSearch(std::unordered_map<const char*, void*>& result_map) {
         const char *key_cstr = key.UTF8String;
         if (offset == -1) {
             result_map[key_cstr] = nullptr;
-        } else if (strcmp([key UTF8String], "il2cpp_domain_get_assemblies") == 0) {
+
+        } else if (strcmp(key_cstr, "il2cpp_domain_get_assemblies") == 0) {
             DummyIL2CPP::il2cpp_domain_get_assemblies_internal = reinterpret_cast<DummyIL2CPP::il2cpp_domain_get_assemblies_internal_t>(addr + offset + il2cpp_init_symbol_offset);
             result_map[key_cstr] = (void*)DummyIL2CPP::dummy_il2cpp_domain_get_assemblies;
+
+        } else if (strcmp(key_cstr, "il2cpp_class_get_property_from_name") == 0) {
+            DummyIL2CPP::il2cpp_class_get_properties_internal = reinterpret_cast<DummyIL2CPP::il2cpp_class_get_properties_internal_t>(addr + offset + il2cpp_init_symbol_offset);
+            result_map[key_cstr] = (void*)DummyIL2CPP::dummy_il2cpp_class_get_property_from_name;
+
         } else {
             result_map[key_cstr] = (void*)(addr + offset + il2cpp_init_symbol_offset);
             NSLog(@"[IL2CPP] %s at %p", key_cstr, result_map[key_cstr]);
