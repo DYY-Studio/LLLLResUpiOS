@@ -324,7 +324,11 @@ void hooked_InitializeStackedCameraData(Unity::CCamera* camera, IL2CPP::CClass* 
 
 	if ([qualityConfig[@"Story.Quality.FSRUpscaling.Enable"] boolValue]) {
 		cameraData->renderScale = storyFactor;
-		cameraData->imageScalingMode = 2;
+		if (storyFactor > 1.0f) {
+			cameraData->imageScalingMode = 2;
+		} else {
+			cameraData->imageScalingMode = 0;
+		}
 	}
 }
 

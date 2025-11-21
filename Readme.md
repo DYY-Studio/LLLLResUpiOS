@@ -58,6 +58,7 @@ iOS17.4以上设备使用[SkitDebug](https://github.com/StephenDev0/StikDebug)�
 | >> `Story.Quality.Low.Factor`|1.0| [Story] | 质量`低`的分辨率缩放因子 |
 | >> `Story.Quality.Medium.Factor`|1.2| [Story] | 质量`中`的分辨率缩放因子 |
 | >> `Story.Quality.High.Factor`|1.6| [Story] | 质量`高`的分辨率缩放因子 |
+| >> `Story.Quality.FSRScaling.Enable`|false| [Story] | *LLLL 4.9.0+*<br>使用FSR实现分辨率缩放 |
 ||||
 |`Enable.MagicaClothHook`|true| [LiveStream]<br>[Story]| 启用布料模拟调整 |
 |>> `MagicaCloth.SimulationFrequency`|120| [LiveStream]<br>[Story]| 布料模拟频率 |
