@@ -223,12 +223,93 @@ struct RenderTextureDescriptor {
 	int memoryless; // enum RenderTextureMemoryless
 };
 
+struct CameraData {
+	float m_ViewMatrix[16];
+	float m_ProjectionMatrix[16];
+	float m_JitterMatrix[16];
+	Unity::CCamera* m_Camera;
+	int renderType; // enum CameraRenderType
+	IL2CPP::CClass* targetTexture;
+	RenderTextureDescriptor cameraTargetDescriptor;
+	float pixelRect[4];
+	bool useScreenCoordOverride;
+	Unity::Vector4 screenSizeOverride;
+	Unity::Vector4 screenCoordScaleBias;
+	int pixelWidth;
+	int pixelHeight;
+	float aspectRatio;
+	float renderScale;
+	int imageScalingMode; // enum ImageScalingMode
+	int upscalingFilter; // enum ImageUpscalingFilter
+	bool fsrOverrideSharpness;
+	float fsrSharpness;
+	int hdrColorBufferPrecision; // enum HDRColorBufferPrecision
+	bool clearDepth;
+	int cameraType; // enum CameraType
+	bool isDefaultViewport;
+	bool isHdrEnabled;
+	bool allowHDROutput;
+	bool requiresDepthTexture;
+	bool requiresOpaqueTexture;
+	bool postProcessingRequiresDepthTexture;
+	bool xrRendering;
+	bool stackLastCameraOutputToHDR;
+	int defaultOpaqueSortFlags; // enum SortingCriteria
+	bool isStereoEnabled;
+	float maxShadowDistance;
+	bool postProcessEnabled;
+	bool stackAnyPostProcessingEnabled;
+	IL2CPP::CClass* captureActions; // IEnumerator<Action<RenderTargetIdentifier, CommandBuffer>>
+	int volumeLayerMask; // struct LayerMask
+	IL2CPP::CClass* volumeTrigger;
+	bool isStopNaNEnabled;
+	bool isDitheringEnabled;
+	int antialiasing; // enum AntialiasingMode
+	int antialiasingQuality; // enum AntialiasingQuality
+	IL2CPP::CClass* renderer; // ScriptableRenderer
+	bool resolveFinalTarget;
+	Unity::Vector3 worldSpaceCameraPos;
+	Unity::Color backgroundColor;
+	IL2CPP::CClass* taaPersistentData; // TaaPersistentData
+	int taaSettings; // enum TemporalAA.Settings
+	Unity::CCamera* baseCamera;
+};
+
 // static NSString* storyCameraName = @"StoryCamera";
-typedef RenderTextureDescriptor (*original_CreateRenderTextureDescriptor_t)(IL2CPP::CClass* camera, float renderScale, bool isHdrEnabled, int msaaSamples, bool needsAlpha, bool requiresOpaqueTexture);
+typedef RenderTextureDescriptor (*original_CreateRenderTextureDescriptor62F2_t)(Unity::CCamera* camera, CameraData* cameraData, bool isHdrEnabled, int requestHDRColorBufferPrecision, int msaaSamples, bool needsAlpha, bool requiresOpaqueTexture);
+static original_CreateRenderTextureDescriptor62F2_t original_CreateRenderTextureDescriptor62F2 = nullptr;
+RenderTextureDescriptor Hooked_CreateRenderTextureDescriptor62F2(Unity::CCamera* camera, CameraData* cameraData, bool isHdrEnabled, int requestHDRColorBufferPrecision, int msaaSamples, bool needsAlpha, bool requiresOpaqueTexture) {
+	Unity::System_String* cameraName = camera->GetName();
+	if (!cameraName) {
+		return original_CreateRenderTextureDescriptor62F2(camera, cameraData, isHdrEnabled, requestHDRColorBufferPrecision, msaaSamples, needsAlpha, requiresOpaqueTexture);
+	}
+	NSString* nsCameraName = cameraName->ToNSString();
+	
+	if (nsCameraName && [nsCameraName hasPrefix:@"StoryCamera"] && cameraData) {
+		float storyFactor = 1.0f;
+		switch (get_RenderTextureQuality()) {
+			case Low:
+				storyFactor = [qualityConfig[@"Story.Quality.Low.Factor"] floatValue];
+				break;
+			case Medium:
+				storyFactor = [qualityConfig[@"Story.Quality.Medium.Factor"] floatValue];
+				break;
+			default:
+				storyFactor = [qualityConfig[@"Story.Quality.High.Factor"] floatValue];
+		}
+		cameraData->renderScale = storyFactor;
+		if (qualityConfig[@"Enable.AntiAliasingHook"]) {
+			msaaSamples = [qualityConfig[@"AntiAliasingSamples"] intValue];
+		}
+	}
+	return original_CreateRenderTextureDescriptor62F2(camera, cameraData, isHdrEnabled, requestHDRColorBufferPrecision, msaaSamples, needsAlpha, requiresOpaqueTexture);
+}
+
+typedef RenderTextureDescriptor (*original_CreateRenderTextureDescriptor_t)(Unity::CCamera* camera, float renderScale, bool isHdrEnabled, int msaaSamples, bool needsAlpha, bool requiresOpaqueTexture);
 static original_CreateRenderTextureDescriptor_t original_CreateRenderTextureDescriptor = nullptr;
-RenderTextureDescriptor Hooked_CreateRenderTextureDescriptor(IL2CPP::CClass* camera, float renderScale, bool isHdrEnabled, int msaaSamples, bool needsAlpha, bool requiresOpaqueTexture)
+RenderTextureDescriptor Hooked_CreateRenderTextureDescriptor(Unity::CCamera* camera, float renderScale, bool isHdrEnabled, int msaaSamples, bool needsAlpha, bool requiresOpaqueTexture)
 {
-	Unity::System_String* cameraName = camera->CallMethodSafe<Unity::System_String*>("ToString");
+	Unity::System_String* cameraName = camera->GetName();
 	if (!cameraName) {
 		return original_CreateRenderTextureDescriptor(camera, renderScale, isHdrEnabled, msaaSamples, needsAlpha, requiresOpaqueTexture);
 	}
@@ -576,7 +657,9 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 
     NSLog(@"[Substrate Hook] C++ IL2CPP Hook logic initiated.");
 
-	BOOL result = true;
+	BOOL result = original_didFinishLaunchingWithOptions(self, _cmd, application, launchOptions);
+
+	bool Unity2022_3_62F = false;
 
 	NSString* app_version = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
 	NSArray* app_version_parts = [app_version componentsSeparatedByString:@"."];
@@ -585,17 +668,13 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 	if ((app_version_major == 4 && app_version_minor >= 9) || app_version_major > 4) {
 		testSearch(il2cppFuncMap);
 
-		result = original_didFinishLaunchingWithOptions(self, _cmd, application, launchOptions);
-
 		if (!IL2CPP::Initialize(dlopen(IL2CPP_FRAMEWORK(BINARY_NAME), RTLD_NOLOAD), il2cppFuncMap)) {
 			return result;
 		}
 		NSLog(@"[IL2CPP Tweak] IL2CPP symbols hidden mode.");
+		Unity2022_3_62F = true;
 	} else if (!IL2CPP::Initialize(dlopen(IL2CPP_FRAMEWORK(BINARY_NAME), RTLD_NOLOAD))) {
-		result = original_didFinishLaunchingWithOptions(self, _cmd, application, launchOptions);
 		return result;
-	} else {
-		result = original_didFinishLaunchingWithOptions(self, _cmd, application, launchOptions);
 	}
 	NSLog(@"[IL2CPP Tweak] IL2CPP Initialized.");
 
@@ -636,6 +715,8 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 				(void**)&original_QuestLiveHeartObject_PlayThrowAnimation
 			);
 			NSLog(@"[IL2CPP Tweak] QuestLiveHeartObject::PlayThrowAnimation hooked");
+		} else {
+			NSLog(@"[IL2CPP Tweak] QuestLiveHeartObject::PlayThrowAnimation not found.");
 		}
 	}
 
@@ -654,6 +735,8 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 				(void**)&original_QuestLiveCutinCharacter_PlaySkillAnimation
 			);
 			NSLog(@"[IL2CPP Tweak] QuestLiveCutinCharacter::PlaySkillAnimation hooked");
+		} else {
+			NSLog(@"[IL2CPP Tweak] QuestLiveCutinCharacter::PlaySkillAnimation not found.");
 		}
 	}
 
@@ -670,6 +753,8 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 			(void**)&original_TitleSceneController_SetPlayerId
 		); 
 		NSLog(@"[IL2CPP Tweak] TitleSceneController::SetPlayerId hooked");
+	} else {
+		NSLog(@"[IL2CPP Tweak] TitleSceneController::SetPlayerId not found.");
 	}
 
 	targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
@@ -719,22 +804,22 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 		NSLog(@"[IL2CPP Tweak] Successfully hooked set_targetFrameRate!");
 	}
 
-	// if (qualityConfig[@"Enable.LiveStreamQualityHook"] && qualityConfig[@"Enable.StoryQualityHook"]) {
-	// 	targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
-	// 		"Tecotec.FesLiveSettingsView",
-	// 		"InitButtons",
-	// 		0
-	// 	);
+	if (qualityConfig[@"Enable.LiveStreamQualityHook"] && qualityConfig[@"Enable.StoryQualityHook"]) {
+		targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+			"Tecotec.FesLiveSettingsView",
+			"InitButtons",
+			0
+		);
 
-	// 	if (targetAddress) {
-	// 		MSHookFunction_p(
-	// 			targetAddress,
-	// 			(void*)hooked_FesLiveSettingsView_InitButtons,
-	// 			(void**)&original_FesLiveSettingsView_InitButtons
-	// 		);
-	// 		NSLog(@"[IL2CPP Tweak] FesLiveSettingsView::InitButtons hooked");
-	// 	}
-	// }
+		if (targetAddress) {
+			MSHookFunction_p(
+				targetAddress,
+				(void*)hooked_FesLiveSettingsView_InitButtons,
+				(void**)&original_FesLiveSettingsView_InitButtons
+			);
+			NSLog(@"[IL2CPP Tweak] FesLiveSettingsView::InitButtons hooked");
+		}
+	}
 
 	targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
 		"UnityEngine.QualitySettings",
@@ -783,20 +868,39 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 		}
 	}
 
-	// targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
-	// 	"UnityEngine.Rendering.Universal.UniversalRenderPipeline",
-	// 	"CreateRenderTextureDescriptor",
-	// 	6
-	// );
+	if ([qualityConfig[@"Enable.StoryQualityHook"] boolValue]) {
+		if (!Unity2022_3_62F) {
+			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+				"UnityEngine.Rendering.Universal.UniversalRenderPipeline",
+				"CreateRenderTextureDescriptor",
+				6
+			);
 
-	// if ([qualityConfig[@"Enable.StoryQualityHook"] boolValue] && targetAddress) {
-	// 	MSHookFunction_p(
-	// 		targetAddress,
-	// 		(void*)Hooked_CreateRenderTextureDescriptor,
-	// 		(void**)&original_CreateRenderTextureDescriptor
-	// 	);
-	// 	NSLog(@"[IL2CPP Tweak] Successfully hooked CreateRenderTextureDescriptor!");
-	// }
+			if (targetAddress) {
+				MSHookFunction_p(
+					targetAddress,
+					(void*)Hooked_CreateRenderTextureDescriptor,
+					(void**)&original_CreateRenderTextureDescriptor
+				);
+				NSLog(@"[IL2CPP Tweak] Successfully hooked CreateRenderTextureDescriptor!");
+			}
+		} else {
+			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+				"UnityEngine.Rendering.Universal.UniversalRenderPipeline",
+				"CreateRenderTextureDescriptor",
+				7
+			);
+
+			if (targetAddress) {
+				MSHookFunction_p(
+					targetAddress,
+					(void*)Hooked_CreateRenderTextureDescriptor62F2,
+					(void**)&original_CreateRenderTextureDescriptor62F2
+				);
+				NSLog(@"[IL2CPP Tweak] Successfully hooked CreateRenderTextureDescriptor 2022.3.62F2!");
+			}
+		}
+	}
 
 	targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
 		"School.LiveMain.FesLiveFixedCamera",
