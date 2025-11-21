@@ -1352,9 +1352,6 @@ static void tweakConstructor() {
 		NSLog(@"[IL2CPP Tweak] Running on device can be landscape");
 	}
 
-	screenNativeBounds = [[UIScreen mainScreen] nativeBounds].size; // Portrait
-	screenRatio = screenNativeBounds.height / screenNativeBounds.width;
-
 	loadConfig();
 
     std::thread hook_thread(WaitForSymbolAndHook);
