@@ -162,7 +162,7 @@ uintptr_t patternScan(const uint8_t* data, size_t dataSize, const std::vector<ui
     return 0; // 未找到匹配项
 }
 
-uintptr_t locateFunctionBySignature(const char* targetModuleName, const std::string& signature) {
+uintptr_t locateFunctionBySignature(const char* targetModuleName, const std::string& signature, intptr_t startOffset = 0) {
     // 1. 获取 __text 段的地址范围
     TextSegmentInfo textInfo = findTextSegment(targetModuleName); // 假设已实现 findTextSegment
 
@@ -182,7 +182,7 @@ uintptr_t locateFunctionBySignature(const char* targetModuleName, const std::str
 
     // 3. 执行模式匹配
     uintptr_t funcAddress = patternScan(
-        (const uint8_t*)textInfo.startAddress + 0x1900000, 
+        (const uint8_t*)(textInfo.startAddress + startOffset), 
         textInfo.size, 
         pattern, 
         mask

@@ -104,7 +104,7 @@ namespace DummyIL2CPP {
 }
 
 static bool testSearch(std::unordered_map<const char*, void*>& result_map) {
-    uintptr_t addr = locateFunctionBySignature("UnityFramework", std::string(il2cpp_init_symbol));
+    uintptr_t addr = locateFunctionBySignature("UnityFramework", std::string(il2cpp_init_symbol), 0x1900000);
     if (addr) {
         NSLog(@"[IL2CPP] Found %p", (void *)addr);
     } else {
