@@ -5,6 +5,7 @@
     "Story.Quality.Low.Factor": 0.6,
     "Story.Quality.Medium.Factor": 1.0,
     "Story.Quality.High.Factor": 1.4,
+    "Story.Quality.FSRUpscaling.Enable": false,
     "MagicaCloth.SimulationFrequency": 120,
     "MagicaCloth.MaxSimulationCountPerFrame": 5,
     "TargetFPS": 60,
