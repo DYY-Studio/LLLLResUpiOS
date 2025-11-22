@@ -1,7 +1,7 @@
 #define UNITY_VERSION_2022_3_8F1
 #define UNITY_VERSION_2022_3_62F2
 
-#include "IOS-Il2cppResolver/IL2CPP_Resolver.hpp"
+#include "IOS-Il2cppResolver/IL2CPP_Resolver.mm"
 #include "txm_bypass.m"
 #include "il2cpp_analyzer/il2cpp_symbol_hidden.mm"
 #include <UIKit/UIKit.h>
@@ -454,8 +454,8 @@ original_TitleSceneController_SetPlayerId_t original_TitleSceneController_SetPla
 void hooked_TitleSceneController_SetPlayerId(void* self, Unity::System_String* playerId) {
 	if (playerId && playerId->ToLength() > 0) {
 		NSString* nsPlayerId = playerId->ToNSString();
-		// const char* playerIdStr = [[@"ID " stringByAppendingString:[nsPlayerId stringByAppendingString:@" HOOKED"]] UTF8String];
-		const char* playerIdStr = [[nsPlayerId stringByAppendingString:@" HOOKED"] UTF8String];
+		const char* playerIdStr = [[@"ID " stringByAppendingString:[nsPlayerId stringByAppendingString:@" HOOKED"]] UTF8String];
+		// const char* playerIdStr = [[nsPlayerId stringByAppendingString:@" HOOKED"] UTF8String];
 		playerId = IL2CPP::String::New(playerIdStr);
 	} else {
 		playerId = IL2CPP::String::New("NO_LOGIN HOOKED");
@@ -464,13 +464,13 @@ void hooked_TitleSceneController_SetPlayerId(void* self, Unity::System_String* p
 	if (_view) {
 		IL2CPP::CClass* playerIdLabel = _view->GetMemberValue<IL2CPP::CClass*>("playerIdLabel");
 		if (playerIdLabel) {
-			// playerIdLabel->SetPropertyValue<Unity::System_String*>("text", playerId);
+			playerIdLabel->SetPropertyValue<Unity::System_String*>("text", playerId);
 			playerIdLabel->SetPropertyValue<int>("overflowMode", 0);
 			playerIdLabel->SetPropertyValue<bool>("enableWordWrapping", false);
 			// return;
 		}
 	} 
-	original_TitleSceneController_SetPlayerId(self, playerId);
+	// original_TitleSceneController_SetPlayerId(self, playerId);
 }
 
 typedef void (*original_FesLiveSettingsView_InitButtons_t)(void* self);
