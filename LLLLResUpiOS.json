@@ -18,7 +18,7 @@
     "Enable.AntiAliasingHook": true,
     "Enable.FocusAreaDelimiterHook": false,
     "Enable.LiveStreamCoverRemoverHook": false,
-    "Enable.QuestLive.NoParticlesHook": true,
+    "Enable.QuestLive.NoParticlesHook": false,
     "Enable.QuestLive.NoThrowAndWaitHook": true,
     "Enable.QuestLive.NoCutinCharacterHook": true,
     "Enable.LiveStream.NoAfterLimitationHook": true,
