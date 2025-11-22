@@ -70,8 +70,8 @@ iOS17.4以上设备使用[SkitDebug](https://github.com/StephenDev0/StikDebug)�
 |`Enable.AntiAliasingHook`|true| [全局]| 启用抗锯齿修改 |
 |>> `AntiAliasingSamples`|8| [全局]| 抗锯齿采样数, 可选1/2/4/8 |
 ||||
-|`Enable.QuestLive.NoParticlesHook`|true| [QuestLive]| 关闭QuestLive心驻留时粒子效果 |
-|`Enable.QuestLive.NoThrowAndWaitHook` | true | [QuestLive] | 关闭QuestLive抛心与心驻留：<br>性能影响最大 |
+|`Enable.QuestLive.NoParticlesHook`| false | [QuestLive]| 关闭QuestLive心驻留时粒子效果 |
+|`Enable.QuestLive.NoThrowAndWaitHook` | true | [QuestLive] | 隐藏QuestLive屏幕心：<br>性能影响最大 |
 |`Enable.QuestLive.NoCutinCharacterHook` | true | [QuestLive] | 关闭QuestLive发动技能时右侧角色切入 |
 ||||
 |`Enable.LiveStream.NoAfterLimitationHook` | true | [LiveStream] | AFTER限入解除：<br>白嫖AFTER |

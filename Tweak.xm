@@ -505,14 +505,26 @@ void hooked_FesLiveSettingsView_InitButtons(void* self) {
 }
 
 // Tecotec.QuestLive.Live.QuestLiveHeartObject.PlayThrowAnimation
-typedef void (*original_QuestLiveHeartObject_PlayThrowAnimation_t)(void* self, float duration, IL2CPP::CClass* playWaitAnimation);
-original_QuestLiveHeartObject_PlayThrowAnimation_t original_QuestLiveHeartObject_PlayThrowAnimation = nullptr;
-void hooked_QuestLiveHeartObject_PlayThrowAnimation(void* self, float duration, IL2CPP::CClass* playWaitAnimation) {}
+// typedef void (*original_QuestLiveHeartObject_PlayThrowAnimation_t)(void* self, float duration, IL2CPP::CClass* playWaitAnimation);
+// original_QuestLiveHeartObject_PlayThrowAnimation_t original_QuestLiveHeartObject_PlayThrowAnimation = nullptr;
+// void hooked_QuestLiveHeartObject_PlayThrowAnimation(void* self, float duration, IL2CPP::CClass* playWaitAnimation) {
+// 	IL2CPP::CClass *pSelf = reinterpret_cast<IL2CPP::CClass*>(self);
+// 	pSelf->CallMethodSafe<void>("KillThrowAnimation");
+// }
 
 // Tecotec.QuestLive.Live.QuestLiveHeartObject.PlayParticles()
 typedef void (*original_QuestLiveHeartObject_PlayParticles_t)(void* self);
 original_QuestLiveHeartObject_PlayParticles_t original_QuestLiveHeartObject_PlayParticles = nullptr;
-void hooked_QuestLiveHeartObject_PlayParticles(void* self) {}
+void hooked_QuestLiveHeartObject_PlayParticles(void* self) {
+	IL2CPP::CClass *pSelf = reinterpret_cast<IL2CPP::CClass*>(self);
+	pSelf->CallMethodSafe<void>("StopParticles");
+}
+
+// Tecotec.QuestLive.Live.QuestLiveHeartObject.ShowHeart(bool show)
+static void (*original_QuestLiveHeartObject_ShowHeart)(void* self, bool show);
+static void hooked_QuestLiveHeartObject_ShowHeart(void* self, bool show) {
+	original_QuestLiveHeartObject_ShowHeart(self, false);
+}
 
 // Tecotec.QuestLive.Live.QuestLiveCutinCharacter.PlaySkillAnimation()
 typedef void (*original_QuestLiveCutinCharacter_PlaySkillAnimation_t)(void* self);
@@ -728,22 +740,22 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 	}
 
 	if ([qualityConfig[@"Enable.QuestLive.NoThrowAndWaitHook"] boolValue]) {
-		// Tecotec.QuestLive.Live.QuestLiveHeartObject.PlayThrowAnimation
+		// Tecotec.QuestLive.Live.QuestLiveHeartObject.ShowHeart(bool show)
 		targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
 			"Tecotec.QuestLive.Live.QuestLiveHeartObject",
-			"PlayThrowAnimation",
-			2
+			"ShowHeart",
+			1
 		);
 
 		if (targetAddress) {
 			MSHookFunction_p(
 				targetAddress,
-				(void*)&hooked_QuestLiveHeartObject_PlayThrowAnimation,
-				(void**)&original_QuestLiveHeartObject_PlayThrowAnimation
+				(void*)&hooked_QuestLiveHeartObject_ShowHeart,
+				(void**)&original_QuestLiveHeartObject_ShowHeart
 			);
-			NSLog(@"[IL2CPP Tweak] QuestLiveHeartObject::PlayThrowAnimation hooked");
+			NSLog(@"[IL2CPP Tweak] QuestLiveHeartObject::ShowHeart hooked");
 		} else {
-			NSLog(@"[IL2CPP Tweak] QuestLiveHeartObject::PlayThrowAnimation not found.");
+			NSLog(@"[IL2CPP Tweak] QuestLiveHeartObject::ShowHeart not found.");
 		}
 	}
 
@@ -920,7 +932,7 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 				NSLog(@"[IL2CPP Tweak] Successfully hooked CreateRenderTextureDescriptor!");
 			}
 		} else {
-			// // void UnityEngine.Rendering.Universal.UniversalRenderPipeline.InitializeStackedCameraData(Camera* camera, UniversalAdditionalCameraData* additionalCameraData, CameraData* cameraData)
+			// void UnityEngine.Rendering.Universal.UniversalRenderPipeline.InitializeStackedCameraData(Camera* camera, UniversalAdditionalCameraData* additionalCameraData, CameraData* cameraData)
 			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
 				"UnityEngine.Rendering.Universal.UniversalRenderPipeline",
 				"InitializeStackedCameraData",
@@ -1349,7 +1361,7 @@ static void tweakConstructor() {
 		@true, @"Enable.FesCameraHook",
 		@true, @"Enable.FrameRateHook",
 		@true, @"Enable.AntiAliasingHook",
-		@true, @"Enable.QuestLive.NoParticlesHook",
+		@false, @"Enable.QuestLive.NoParticlesHook",
 		@true, @"Enable.QuestLive.NoThrowAndWaitHook",
 		@true, @"Enable.QuestLive.NoCutinCharacterHook",
 		@true, @"Enable.LiveStream.NoAfterLimitationHook",
