@@ -1,9 +1,12 @@
 #import <Foundation/Foundation.h>
 
 #include "MachO_Analyzer.hpp"
+#import <netinet/in.h>
 
-static const char *il2cpp_init_symbol = "00 00 80 52 62 73 63 95 E0 03 13 AA C2 77 01 94";
-static const int il2cpp_init_symbol_offset = -0x18;
+// static const char *il2cpp_init_symbol = "00 00 80 52 62 73 63 95 E0 03 13 AA C2 77 01 94";
+// static const int il2cpp_init_symbol_offset = -0x18;
+static const char *il2cpp_init_symbol = "F4 4F BE A9 FD 7B 01 A9 FD 43 00 91 F3 03 00 AA ?? ?? ?? ?? ?? ?? ?? ?? 00 00 80 52 ?? ?? ?? ?? E0 03 13 AA ?? ?? ?? ?? FD 7B 41 A9 F4 4F C2 A8 C0 03 5F D6";
+static const int il2cpp_init_symbol_offset = 0;
 
 static const NSDictionary *il2cpp_symbol_offsets = @{
     @"il2cpp_init": @0x0,
@@ -36,6 +39,15 @@ static const NSDictionary *il2cpp_symbol_offsets = @{
     @"il2cpp_array_new": @0x74,
     @"il2cpp_assembly_get_image": @0x84,
     @"il2cpp_image_get_name": @-1
+};
+
+// 粗略检查找到的IL2CPP符号是否正确
+static const NSDictionary *il2cpp_symbol_headers = @{
+    @"il2cpp_init": @0xF44FBEA9,
+    @"il2cpp_class_get_method_from_name": @0x03008052, // Internal function
+    @"il2cpp_resolve_icall": @0xFFC301D1, // Internal function
+    @"il2cpp_thread_detach": @0xFD7BBFA9, // Internal function
+    @"il2cpp_method_get_param_name": @0xFF0301D1, // Internal function
 };
 
 namespace DummyIL2CPP {
@@ -91,19 +103,13 @@ namespace DummyIL2CPP {
     }
 }
 
-static void testSearch(std::unordered_map<const char*, void*>& result_map) {
+static bool testSearch(std::unordered_map<const char*, void*>& result_map) {
     uintptr_t addr = locateFunctionBySignature("UnityFramework", std::string(il2cpp_init_symbol));
     if (addr) {
         NSLog(@"[IL2CPP] Found %p", (void *)addr);
     } else {
         NSLog(@"[IL2CPP] Failed to find %s", il2cpp_init_symbol);
-    }
-
-    unsigned char bytes[4];
-    memcpy(bytes, (void*)(addr + il2cpp_init_symbol_offset), 4);
-    // F4 4F BE A9
-    if (bytes[0] == 0xF4 && bytes[1] == 0x4F && bytes[2] == 0xBE && bytes[3] == 0xA9) {
-        NSLog(@"[IL2CPP] Checked %p", (void *)addr);
+        return false;
     }
 
     for (NSString *key in il2cpp_symbol_offsets) {
@@ -111,18 +117,30 @@ static void testSearch(std::unordered_map<const char*, void*>& result_map) {
         const char *key_cstr = key.UTF8String;
         if (offset == -1) {
             result_map[key_cstr] = nullptr;
+            continue;
 
         } else if (strcmp(key_cstr, "il2cpp_domain_get_assemblies") == 0) {
             DummyIL2CPP::il2cpp_domain_get_assemblies_internal = reinterpret_cast<DummyIL2CPP::il2cpp_domain_get_assemblies_internal_t>(addr + offset + il2cpp_init_symbol_offset);
             result_map[key_cstr] = (void*)DummyIL2CPP::dummy_il2cpp_domain_get_assemblies;
 
-        } else if (strcmp(key_cstr, "il2cpp_class_get_property_from_name") == 0) {
-            DummyIL2CPP::il2cpp_class_get_properties_internal = reinterpret_cast<DummyIL2CPP::il2cpp_class_get_properties_internal_t>(addr + offset + il2cpp_init_symbol_offset);
-            result_map[key_cstr] = (void*)DummyIL2CPP::dummy_il2cpp_class_get_property_from_name;
-
         } else {
             result_map[key_cstr] = (void*)(addr + offset + il2cpp_init_symbol_offset);
             NSLog(@"[IL2CPP] %s at %p", key_cstr, result_map[key_cstr]);
         }
+
+        if ([il2cpp_symbol_headers objectForKey:key]) {
+            uint32_t header;
+            uint32_t expectHeader = [[il2cpp_symbol_headers objectForKey:key] unsignedIntValue];
+            memcpy(&header, result_map[key_cstr], sizeof(uint32_t));
+            header = ntohl(header);
+            if (header != expectHeader) {
+                NSLog(@"[IL2CPP] %s header mismatch %u <> %u", key_cstr, header, expectHeader);
+                return false;
+            } else {
+                NSLog(@"[IL2CPP] %s header match", key_cstr);
+            }
+        }
     }
+
+    return true;
 }

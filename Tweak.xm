@@ -690,7 +690,10 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 	int app_version_major = [app_version_parts[0] intValue];
 	int app_version_minor = [app_version_parts[1] intValue];
 	if ((app_version_major == 4 && app_version_minor >= 9) || app_version_major > 4) {
-		testSearch(il2cppFuncMap);
+		if (!testSearch(il2cppFuncMap)) {
+			NSLog(@"[IL2CPP Tweak] IL2CPP symbols hidden mode. Search failed.");
+			return result;
+		}
 
 		if (!IL2CPP::Initialize(dlopen(IL2CPP_FRAMEWORK(BINARY_NAME), RTLD_NOLOAD), il2cppFuncMap)) {
 			return result;
