@@ -68,7 +68,7 @@ iOS17.4以上设备使用[SkitDebug](https://github.com/StephenDev0/StikDebug)�
 |>> `TargetFPS`|60| [全局]| 目标帧率 | 
 ||||
 |`Enable.AntiAliasingHook`|true| [全局]| 启用抗锯齿修改 |
-|>> `AntiAliasingSamples`|8| [全局]| 抗锯齿采样数, 可选0/2/4/8 |
+|>> `AntiAliasingSamples`|8| [全局]| 抗锯齿采样数, 可选1/2/4/8 |
 ||||
 |`Enable.QuestLive.NoParticlesHook`|true| [QuestLive]| 关闭QuestLive心驻留时粒子效果 |
 |`Enable.QuestLive.NoThrowAndWaitHook` | true | [QuestLive] | 关闭QuestLive抛心与心驻留：<br>性能影响最大 |
