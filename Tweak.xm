@@ -120,16 +120,7 @@ void loadConfig() {
             NSDictionary *config = (NSDictionary *)jsonObject;
 
 			if (config) {
-				id allKeys = [qualityConfig allKeys];
-				for (NSString *key in allKeys) {
-					id value = config[key];
-					if (value) {
-						[qualityConfig setValue:value forKey:key];
-						NSLog(@"[IL2CPP Tweak] Config load %@ %@", key, value);
-					} else {
-						NSLog(@"[IL2CPP Tweak] Config load %@ failed.", key);
-					}
-				}
+				[qualityConfig addEntriesFromDictionary:config];
 				NSLog(@"[IL2CPP Tweak] Config loaded.");
 			}
             

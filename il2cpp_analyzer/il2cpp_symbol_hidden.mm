@@ -135,16 +135,7 @@ void readOffsetsFromJson(NSString* app_version, NSMutableDictionary *il2cpp_symb
             NSDictionary *config = (NSDictionary *)jsonObject;
 
 			if (config) {
-				id allKeys = [il2cpp_symbol_offsets allKeys];
-				for (NSString *key in allKeys) {
-					id value = config[key];
-					if (value) {
-						[il2cpp_symbol_offsets_from_file setValue:value forKey:key];
-						NSLog(@"[IL2CPP Tweak] Config load %@ %@", key, value);
-					} else {
-						NSLog(@"[IL2CPP Tweak] Config load %@ failed.", key);
-					}
-				}
+				[il2cpp_symbol_offsets_from_file addEntriesFromDictionary:config];
 				NSLog(@"[IL2CPP Tweak] Config loaded.");
 			}
             
