@@ -103,7 +103,60 @@ namespace DummyIL2CPP {
     }
 }
 
-static bool testSearch(std::unordered_map<const char*, void*>& result_map) {
+
+void placeholder() {}
+NSString *getDylibDirectoryPath() {
+    Dl_info info;
+
+    if (dladdr((const void *)&placeholder, &info)) {
+        NSString *fullPath = [NSString stringWithUTF8String:info.dli_fname];
+
+        return [fullPath stringByDeletingLastPathComponent];
+    }
+    
+    return nil;
+}
+
+void readOffsetsFromJson(NSString* app_version, NSMutableDictionary *il2cpp_symbol_offsets_from_file) {
+    NSLog(@"[IL2CPP Tweak] Try load offsets");
+    NSString *offsetFilePrefix = @"IL2CPP_OFFSETS_";
+    NSString *configFileName = [[offsetFilePrefix stringByAppendingString:app_version] stringByAppendingString:@".json"];
+    NSString *configPath = [getDylibDirectoryPath() stringByAppendingPathComponent:configFileName];
+    
+    NSError *error = nil;
+    NSData *data = [NSData dataWithContentsOfFile:configPath options:0 error:&error];
+    
+    if (data && !error) {
+        id jsonObject = [NSJSONSerialization JSONObjectWithData:data 
+                                                      options:NSJSONReadingAllowFragments 
+                                                        error:&error];
+        
+        if (jsonObject && !error && [jsonObject isKindOfClass:[NSDictionary class]]) {
+            NSDictionary *config = (NSDictionary *)jsonObject;
+
+			if (config) {
+				id allKeys = [il2cpp_symbol_offsets allKeys];
+				for (NSString *key in allKeys) {
+					id value = config[key];
+					if (value) {
+						[il2cpp_symbol_offsets_from_file setValue:value forKey:key];
+						NSLog(@"[IL2CPP Tweak] Config load %@ %@", key, value);
+					} else {
+						NSLog(@"[IL2CPP Tweak] Config load %@ failed.", key);
+					}
+				}
+				NSLog(@"[IL2CPP Tweak] Config loaded.");
+			}
+            
+        } else {
+            NSLog(@"[IL2CPP Tweak] ERROR: JSON parsing failed: %@", error);
+        }
+    } else {
+        NSLog(@"[IL2CPP Tweak] ERROR: Could not read offset file: %@", error);
+    }
+}
+
+static bool testSearch(std::unordered_map<const char*, void*>& result_map, NSString* app_version) {
     uintptr_t addr = locateFunctionBySignature("UnityFramework", std::string(il2cpp_init_symbol), 0x1900000);
     if (addr) {
         NSLog(@"[IL2CPP] Found %p", (void *)addr);
@@ -112,8 +165,16 @@ static bool testSearch(std::unordered_map<const char*, void*>& result_map) {
         return false;
     }
 
-    for (NSString *key in il2cpp_symbol_offsets) {
-        int offset = [il2cpp_symbol_offsets[key] intValue];
+    NSMutableDictionary *il2cpp_symbol_offsets_from_file = [il2cpp_symbol_offsets mutableCopy];
+    readOffsetsFromJson(app_version, il2cpp_symbol_offsets_from_file);
+
+    if (il2cpp_symbol_offsets_from_file.count == 0) {
+        NSLog(@"[IL2CPP] No offsets found.");
+        return false;
+    }
+
+    for (NSString *key in il2cpp_symbol_offsets_from_file) {
+        int offset = [il2cpp_symbol_offsets_from_file[key] intValue];
         const char *key_cstr = key.UTF8String;
         if (offset == -1) {
             result_map[key_cstr] = nullptr;

@@ -90,7 +90,7 @@ Resolution Hooked_GetResolution(LiveAreaQuality quality, LiveScreenOrientation o
 }
 
 // Inspix.AlphaBlendCamera.UpdateAlpha(float newAlpha)
-void (*original_AlphaBlendCamera_UpdateAlpha)(void *self, float newAlpha);
+static void (*original_AlphaBlendCamera_UpdateAlpha)(void *self, float newAlpha);
 void hooked_AlphaBlendCamera_UpdateAlpha(void *self, float newAlpha) {
     if (newAlpha < 1.0f && !inAlphaBlend) {
 		inAlphaBlend = true;
@@ -100,18 +100,6 @@ void hooked_AlphaBlendCamera_UpdateAlpha(void *self, float newAlpha) {
 		set_RenderTextureQuality(get_RenderTextureQuality());
 	}
 	original_AlphaBlendCamera_UpdateAlpha(self, newAlpha);
-}
-
-NSString *getDylibDirectoryPath() {
-    Dl_info info;
-
-    if (dladdr((const void *)&Hooked_GetResolution, &info)) {
-        NSString *fullPath = [NSString stringWithUTF8String:info.dli_fname];
-
-        return [fullPath stringByDeletingLastPathComponent];
-    }
-    
-    return nil;
 }
 
 void loadConfig() {
@@ -387,7 +375,7 @@ void hooked_MagicaManager_SetSimulationFrequency(int frequency)
 }
 
 typedef void (*original_MagicaManager_SetMaxSimulationCountPerFrame_t)(int count);
-original_MagicaManager_SetMaxSimulationCountPerFrame_t original_MagicaManager_SetMaxSimulationCountPerFrame = nullptr;
+static original_MagicaManager_SetMaxSimulationCountPerFrame_t original_MagicaManager_SetMaxSimulationCountPerFrame = nullptr;
 void hooked_MagicaManager_SetMaxSimulationCountPerFrame(int count)
 {
 	original_MagicaManager_SetMaxSimulationCountPerFrame([qualityConfig[@"MagicaCloth.MaxSimulationCountPerFrame"] intValue]);
@@ -401,14 +389,14 @@ void hooked_MagicaManager_SetMaxSimulationCountPerFrame(int count)
 }
 
 typedef void (*original_IsFocusableChecker_SetIsFocusAllowed_t)(void* self, bool isFocusAllowed);
-original_IsFocusableChecker_SetIsFocusAllowed_t original_IsFocusableChecker_SetIsFocusAllowed = nullptr;
+static original_IsFocusableChecker_SetIsFocusAllowed_t original_IsFocusableChecker_SetIsFocusAllowed = nullptr;
 void hooked_IsFocusableChecker_SetIsFocusAllowed(void* self, bool isFocusAllowed)
 {
 	original_IsFocusableChecker_SetIsFocusAllowed(self, true);
 }
 
 typedef bool (*original_IsFocusableChecker_IsInFocusableArea_t)(void* self);
-original_IsFocusableChecker_IsInFocusableArea_t original_IsFocusableChecker_IsInFocusableArea = nullptr;
+static original_IsFocusableChecker_IsInFocusableArea_t original_IsFocusableChecker_IsInFocusableArea = nullptr;
 bool hooked_IsFocusableChecker_IsInFocusableArea(void* self)
 {
 	return true;
@@ -419,7 +407,7 @@ struct CoverImageCommand {
 	double SyncTime;	
 };
 typedef void (*original_CoverImageCommandReceiver_Awakeb90_t)(void* self, CoverImageCommand value);
-original_CoverImageCommandReceiver_Awakeb90_t original_CoverImageCommandReceiver_Awakeb90 = nullptr;
+static original_CoverImageCommandReceiver_Awakeb90_t original_CoverImageCommandReceiver_Awakeb90 = nullptr;
 void hooked_CoverImageCommandReceiver_Awakeb90(void* self, CoverImageCommand value)
 {
 	value.CoverImageName = IL2CPP::String::New("");
@@ -431,26 +419,26 @@ struct FootShadowActivateCommand {
 	double SyncTime;
 };
 typedef void (*original_FootShadowManipulator_SetupObservePropertyb150_t)(void* self, FootShadowActivateCommand value);
-original_FootShadowManipulator_SetupObservePropertyb150_t original_FootShadowManipulator_SetupObservePropertyb150 = nullptr;
+static original_FootShadowManipulator_SetupObservePropertyb150_t original_FootShadowManipulator_SetupObservePropertyb150 = nullptr;
 void hooked_FootShadowManipulator_SetupObservePropertyb150(void* self, FootShadowActivateCommand value) {
 	value.IsActive = true;
 	original_FootShadowManipulator_SetupObservePropertyb150(self, value);
 }
 
 typedef void (*original_CharacterVisibleController_SetVisible_t)(void* self, bool value);
-original_CharacterVisibleController_SetVisible_t original_CharacterVisibleController_SetVisible = nullptr;
+static original_CharacterVisibleController_SetVisible_t original_CharacterVisibleController_SetVisible = nullptr;
 void hooked_CharacterVisibleController_SetVisible(void* self, bool visible) {
 	original_CharacterVisibleController_SetVisible(self, true);
 }
 
 typedef void (*original_FocusableCharacter_ctor_b50_t)(void* self, bool value);
-original_FocusableCharacter_ctor_b50_t original_FocusableCharacter_ctor_b50 = nullptr;
+static original_FocusableCharacter_ctor_b50_t original_FocusableCharacter_ctor_b50 = nullptr;
 void hooked_FocusableCharacter_ctor_b50(void* self, bool value) {
 	original_FocusableCharacter_ctor_b50(self, true);
 }
 
 typedef void (*original_TitleSceneController_SetPlayerId_t)(void* self, Unity::System_String* playerId);
-original_TitleSceneController_SetPlayerId_t original_TitleSceneController_SetPlayerId = nullptr;
+static original_TitleSceneController_SetPlayerId_t original_TitleSceneController_SetPlayerId = nullptr;
 void hooked_TitleSceneController_SetPlayerId(void* self, Unity::System_String* playerId) {
 	if (playerId && playerId->ToLength() > 0) {
 		NSString* nsPlayerId = playerId->ToNSString();
@@ -474,7 +462,7 @@ void hooked_TitleSceneController_SetPlayerId(void* self, Unity::System_String* p
 }
 
 typedef void (*original_FesLiveSettingsView_InitButtons_t)(void* self);
-original_FesLiveSettingsView_InitButtons_t original_FesLiveSettingsView_InitButtons = nullptr;
+static original_FesLiveSettingsView_InitButtons_t original_FesLiveSettingsView_InitButtons = nullptr;
 void hooked_FesLiveSettingsView_InitButtons(void* self) { 
 	original_FesLiveSettingsView_InitButtons(self);
 
@@ -514,7 +502,7 @@ void hooked_FesLiveSettingsView_InitButtons(void* self) {
 
 // Tecotec.QuestLive.Live.QuestLiveHeartObject.PlayParticles()
 typedef void (*original_QuestLiveHeartObject_PlayParticles_t)(void* self);
-original_QuestLiveHeartObject_PlayParticles_t original_QuestLiveHeartObject_PlayParticles = nullptr;
+static original_QuestLiveHeartObject_PlayParticles_t original_QuestLiveHeartObject_PlayParticles = nullptr;
 void hooked_QuestLiveHeartObject_PlayParticles(void* self) {
 	IL2CPP::CClass *pSelf = reinterpret_cast<IL2CPP::CClass*>(self);
 	pSelf->CallMethodSafe<void>("StopParticles");
@@ -528,7 +516,7 @@ static void hooked_QuestLiveHeartObject_ShowHeart(void* self, bool show) {
 
 // Tecotec.QuestLive.Live.QuestLiveCutinCharacter.PlaySkillAnimation()
 typedef void (*original_QuestLiveCutinCharacter_PlaySkillAnimation_t)(void* self);
-original_QuestLiveCutinCharacter_PlaySkillAnimation_t original_QuestLiveCutinCharacter_PlaySkillAnimation = nullptr;
+static original_QuestLiveCutinCharacter_PlaySkillAnimation_t original_QuestLiveCutinCharacter_PlaySkillAnimation = nullptr;
 void hooked_QuestLiveCutinCharacter_PlaySkillAnimation(void* self) {}
 
 struct MakeExtraAdmissionObservableReturn {
@@ -538,7 +526,7 @@ struct MakeExtraAdmissionObservableReturn {
 };
 // (int, bool, bool) School.LiveMain.GiftPointModel::<MakeExtraAdmissionObservable>b__50_0(WithliveLiveInfoResponse response)
 typedef MakeExtraAdmissionObservableReturn (*original_GiftPointModel_MakeExtraAdmissionObservable_b_50_t)(void* self, IL2CPP::CClass* response);
-original_GiftPointModel_MakeExtraAdmissionObservable_b_50_t original_GiftPointModel_MakeExtraAdmissionObservable_b_50 = nullptr;
+static original_GiftPointModel_MakeExtraAdmissionObservable_b_50_t original_GiftPointModel_MakeExtraAdmissionObservable_b_50 = nullptr;
 MakeExtraAdmissionObservableReturn hooked_GiftPointModel_MakeExtraAdmissionObservable_b_50(void* self, IL2CPP::CClass* response) {
 	MakeExtraAdmissionObservableReturn result = original_GiftPointModel_MakeExtraAdmissionObservable_b_50(self, response);
 	result.HasExtraAdmission_k__BackingField = true;
@@ -547,7 +535,7 @@ MakeExtraAdmissionObservableReturn hooked_GiftPointModel_MakeExtraAdmissionObser
 
 // (int, bool, bool) School.LiveMain.GiftPointModel::<MakeExtraAdmissionObservable>b__51_0(FesliveLiveInfoResponse response)
 typedef MakeExtraAdmissionObservableReturn (*original_GiftPointModel_MakeExtraAdmissionObservable_b_51_t)(void* self, IL2CPP::CClass* response);
-original_GiftPointModel_MakeExtraAdmissionObservable_b_51_t original_GiftPointModel_MakeExtraAdmissionObservable_b_51 = nullptr;
+static original_GiftPointModel_MakeExtraAdmissionObservable_b_51_t original_GiftPointModel_MakeExtraAdmissionObservable_b_51 = nullptr;
 MakeExtraAdmissionObservableReturn hooked_GiftPointModel_MakeExtraAdmissionObservable_b_51(void* self, IL2CPP::CClass* response) {
 	MakeExtraAdmissionObservableReturn result = original_GiftPointModel_MakeExtraAdmissionObservable_b_51(self, response);
 	result.HasExtraAdmission_k__BackingField = true;
@@ -557,14 +545,14 @@ MakeExtraAdmissionObservableReturn hooked_GiftPointModel_MakeExtraAdmissionObser
 
 // void School.LiveMain.ChapterRecord..ctor(int chapterNo, string title, float startSeconds, bool isExtra)
 typedef void (*original_LiveMain_ChapterRecord_ctor_t)(void* self, int chapterNo, Unity::System_String* title, float startSeconds, bool isExtra);
-original_LiveMain_ChapterRecord_ctor_t original_LiveMain_ChapterRecord_ctor = nullptr;
+static original_LiveMain_ChapterRecord_ctor_t original_LiveMain_ChapterRecord_ctor = nullptr;
 void hooked_LiveMain_ChapterRecord_ctor(void* self, int chapterNo, Unity::System_String* title, float startSeconds, bool isExtra) {
 	original_LiveMain_ChapterRecord_ctor(self, chapterNo, title, startSeconds, false);
 }
 
 // void School.LiveMain.LiveConnectChapterModel.UpdateAvailableChapterCount()
 typedef void (*original_LiveConnectChapterModel_UpdateAvailableChapterCount_t)(void* self);
-original_LiveConnectChapterModel_UpdateAvailableChapterCount_t original_LiveConnectChapterModel_UpdateAvailableChapterCount = nullptr;
+static original_LiveConnectChapterModel_UpdateAvailableChapterCount_t original_LiveConnectChapterModel_UpdateAvailableChapterCount = nullptr;
 void hooked_LiveConnectChapterModel_UpdateAvailableChapterCount(void* self) {
 	IL2CPP::CClass* pSelf = reinterpret_cast<IL2CPP::CClass*>(self);
 
@@ -607,7 +595,7 @@ void hooked_LiveConnectChapterModel_UpdateAvailableChapterCount(void* self) {
 
 // School.LiveMain.CameraSelectModel+<>c__DisplayClass9_0.<.ctor>b__0
 typedef void (*original_LiveMain_CameraSelectModel_DisplayClass9_0_ctor_b_0_t)(void* self);
-original_LiveMain_CameraSelectModel_DisplayClass9_0_ctor_b_0_t original_LiveMain_CameraSelectModel_DisplayClass9_0_ctor_b_0 = nullptr;
+static original_LiveMain_CameraSelectModel_DisplayClass9_0_ctor_b_0_t original_LiveMain_CameraSelectModel_DisplayClass9_0_ctor_b_0 = nullptr;
 void hooked_LiveMain_CameraSelectModel_DisplayClass9_0_ctor_b_0(void* self) {}
 
 enum LiveTicketRank {
@@ -624,7 +612,7 @@ enum LiveTicketRank {
 
 // School.LiveMain.CameraSelectModel(string liveId, IEnumerable<LiveCameraType> allowedCameraTypes, LiveCameraType selectedCameraType, IEnumerable<int> characterIds, int focusedCharacterId, LiveTicketRank ticketRank, LiveContentType contentType)
 typedef void (*original_CameraSelectModel_ctor_t)(void* self, Unity::System_String* liveId, IL2CPP::CClass* allowedCameraTypes, int selectedCameraType, IL2CPP::CClass* characterIds, int focusedCharacterId, LiveTicketRank ticketRank, int contentType);
-original_CameraSelectModel_ctor_t original_CameraSelectModel_ctor = nullptr;
+static original_CameraSelectModel_ctor_t original_CameraSelectModel_ctor = nullptr;
 void hooked_CameraSelectModel_ctor(void* self, Unity::System_String* liveId, IL2CPP::CClass* allowedCameraTypes, int selectedCameraType, IL2CPP::CClass* characterIds, int focusedCharacterId, LiveTicketRank ticketRank, int contentType) {
 	// NSLog(@"[IL2CPP Tweak] CameraSelectModel::ctor called. %s", allowedCameraTypes->m_Object.m_pClass->m_pName);
 
@@ -642,7 +630,7 @@ void hooked_CameraSelectModel_ctor(void* self, Unity::System_String* liveId, IL2
 
 // School.LiveMain.CameraTypeSelectNodeView.UpdateContent(CameraTypeSelectNodeData nodeData)
 typedef void (*original_CameraTypeSelectNodeView_UpdateContent_t)(void* self, IL2CPP::CClass* nodeData);
-original_CameraTypeSelectNodeView_UpdateContent_t original_CameraTypeSelectNodeView_UpdateContent = nullptr;
+static original_CameraTypeSelectNodeView_UpdateContent_t original_CameraTypeSelectNodeView_UpdateContent = nullptr;
 void hooked_CameraTypeSelectNodeView_UpdateContent(void* self, IL2CPP::CClass* nodeData) { 
 	// NSLog(@"[IL2CPP Tweak] CameraTypeSelectNodeView::UpdateContent called.");
 	nodeData->SetMemberValue<bool>("IsAllowed", true);
@@ -650,25 +638,25 @@ void hooked_CameraTypeSelectNodeView_UpdateContent(void* self, IL2CPP::CClass* n
 }
 
 // Inspix.PlayerGameViewUtilsImpl.SetPortraitImpl()
-void (*original_PlayerGameViewUtilsImpl_SetPortraitImpl)(void* self) = nullptr;
+static void (*original_PlayerGameViewUtilsImpl_SetPortraitImpl)(void* self) = nullptr;
 void hooked_PlayerGameViewUtilsImpl_SetPortraitImpl(void* self) {
 	return;
 }
 
 // Inspix.PlayerGameViewUtilsImpl.SetLandscapeImpl()
-void (*original_PlayerGameViewUtilsImpl_SetLandscapeImpl)(void* self) = nullptr;
+static void (*original_PlayerGameViewUtilsImpl_SetLandscapeImpl)(void* self) = nullptr;
 void hooked_PlayerGameViewUtilsImpl_SetLandscapeImpl(void* self) {
 	return;
 }
 
 // Inspix.PlayerGameViewUtilsImpl.CurrentOrientationIsImpl(enum deviceOrientation)
-bool (*original_PlayerGameViewUtilsImpl_CurrentOrientationIsImpl)(void* self, int deviceOrientation) = nullptr;
+static bool (*original_PlayerGameViewUtilsImpl_CurrentOrientationIsImpl)(void* self, int deviceOrientation) = nullptr;
 bool hooked_PlayerGameViewUtilsImpl_CurrentOrientationIsImpl(void* self, int deviceOrientation) {
 	return true;
 }
 
 // UniTask Inspix.LiveMain.BasePopup.OpenAsync()
-IL2CPP::CClass* (*original_LiveMain_BasePopup_OpenAsync)(void* self) = nullptr;
+static IL2CPP::CClass* (*original_LiveMain_BasePopup_OpenAsync)(void* self) = nullptr;
 IL2CPP::CClass* hooked_LiveMain_BasePopup_OpenAsync(void* self) {
 	float width = (float)IL2CPP::Helper::InvokeStaticMethod<int>(
 		"UnityEngine.Screen",
@@ -702,7 +690,7 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 	int app_version_major = [app_version_parts[0] intValue];
 	int app_version_minor = [app_version_parts[1] intValue];
 	if ((app_version_major == 4 && app_version_minor >= 9) || app_version_major > 4) {
-		if (!testSearch(il2cppFuncMap)) {
+		if (!testSearch(il2cppFuncMap, app_version)) {
 			NSLog(@"[IL2CPP Tweak] IL2CPP symbols hidden mode. Search failed.");
 			return result;
 		}
