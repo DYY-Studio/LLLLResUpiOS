@@ -42,6 +42,24 @@ iOS17.4以上设备使用[SkitDebug](https://github.com/StephenDev0/StikDebug)�
 ## 已越狱iOS
 需要自行修改源代码，使其按照传统方式载入CydiaSubstrate，然后`make package`，安装到设备即可
 
+# 兼容性
+兼容目标环境的`LLLLResUpiOS`的最低版本。
+
+版本号均表示最低版本，如`4.9.0`表示4.9.0及以后版本。
+
+`LLLLResUpiOS`向前兼容，更新的版本也可在旧环境中正常运作。
+
+| 客户端 | LLLLResUpiOS |
+| :---: | :---: |
+| 4.9.0 | v0.0.10 |
+| 4.8.0 | v0.0.5 |
+| ~ | ~ |
+
+| iOS | LLLLResUpiOS |
+| :---: | :---: |
+| iOS 26.0 | v0.0.7<br>`dobby.dylib`<br>`Geode.js` |
+| iOS 15.0 | ~ |
+
 # 自定义配置
 1. 拷贝`LLLLResUpiOS.json`到`LiveContainer/Tweaks/<文件夹名称>`下，和`LLLLResUpiOS.dylib`在同一目录
 2. 编辑其中内容即可，启动时会自动读取
