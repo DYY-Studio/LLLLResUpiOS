@@ -53,8 +53,8 @@ static bool inAlphaBlend = false;
 static const float alphaBlendFactor = 2.0f/3.0f;
 
 typedef Resolution (*OriginalGetResolution_t)(LiveAreaQuality quality, LiveScreenOrientation orientation);
-static OriginalGetResolution_t Original_GetResolution = nullptr;
-Resolution Hooked_GetResolution(LiveAreaQuality quality, LiveScreenOrientation orientation)
+static OriginalGetResolution_t original_GetResolution = nullptr;
+Resolution hooked_GetResolution(LiveAreaQuality quality, LiveScreenOrientation orientation)
 {
     Resolution customRes;
     int shortSide = 1080, longSide = 1920;
@@ -86,7 +86,7 @@ Resolution Hooked_GetResolution(LiveAreaQuality quality, LiveScreenOrientation o
     }
     customRes.refreshRate = [qualityConfig[@"TargetFPS"] intValue];
     return customRes;
-    // return Original_GetResolution(quality, orientation);
+    // return original_GetResolution(quality, orientation);
 }
 
 // Inspix.AlphaBlendCamera.UpdateAlpha(float newAlpha)
@@ -133,50 +133,50 @@ void loadConfig() {
 }
 
 typedef void (*original_set_targetFrameRate_t)(int targetFrameRate);
-static original_set_targetFrameRate_t Original_set_targetFrameRate = nullptr;
+static original_set_targetFrameRate_t original_set_targetFrameRate = nullptr;
 void set_targetFrameRateInternal(int targetFrameRate) {
 	IL2CPP::ResolveCall("UnityEngine.Application::set_targetFrameRate(System.Int32)");
 }
-void Hooked_set_targetFrameRate(int targetFrameRate) {
+void hooked_set_targetFrameRate(int targetFrameRate) {
     // set_targetFrameRateInternal([qualityConfig[@"TargetFPS"] intValue]);
-	Original_set_targetFrameRate([qualityConfig[@"TargetFPS"] intValue]);
+	original_set_targetFrameRate([qualityConfig[@"TargetFPS"] intValue]);
 }
 
 typedef void (*original_set_antiAliasing_t)(int antiAliasing);
-static original_set_antiAliasing_t Original_set_antiAliasing = nullptr;
+static original_set_antiAliasing_t original_set_antiAliasing = nullptr;
 void set_antiAliasingInternal(int antiAliasing) {
 	IL2CPP::ResolveCall("UnityEngine.QualitySettings::set_antiAliasing(System.Int32)");
 }
-void Hooked_set_antiAliasing(int antiAliasing) {
+void hooked_set_antiAliasing(int antiAliasing) {
     // set_antiAliasingInternal([qualityConfig[@"AntiAliasingSamples"] intValue]);
-	Original_set_antiAliasing([qualityConfig[@"AntiAliasingSamples"] intValue]);
+	original_set_antiAliasing([qualityConfig[@"AntiAliasingSamples"] intValue]);
 }
 
 enum LiveCameraType { Undefined, Dynamic, Arena, Stand, SchoolIdle };
 typedef void (*original_fesLiveFixedCameraCtor_t)(void *self, IL2CPP::CClass* camera, IL2CPP::CClass* targetTexture, IL2CPP::CClass* setting, LiveCameraType cameraType);
-static original_fesLiveFixedCameraCtor_t Original_fesLiveFixedCameraCtor = nullptr;
-void Hooked_fesLiveFixedCameraCtor(void *self, IL2CPP::CClass* camera, IL2CPP::CClass* targetTexture, IL2CPP::CClass* setting, LiveCameraType cameraType) {
+static original_fesLiveFixedCameraCtor_t original_fesLiveFixedCameraCtor = nullptr;
+void hooked_fesLiveFixedCameraCtor(void *self, IL2CPP::CClass* camera, IL2CPP::CClass* targetTexture, IL2CPP::CClass* setting, LiveCameraType cameraType) {
 	setting->SetMemberValue<float>("moveRadiusLimit", 100000.0f);
 	setting->SetMemberValue<float>("rotateAngleLimit", 360.0f);
 	setting->SetMemberValue<float>("panSensitivity", 0.05f);
 	setting->SetMemberValue<Unity::Vector2>("fovRange", Unity::Vector2(10.0f, 150.0f));
-    Original_fesLiveFixedCameraCtor(self, camera, targetTexture, setting, cameraType);
+    original_fesLiveFixedCameraCtor(self, camera, targetTexture, setting, cameraType);
 }
 
 typedef void (*original_idolTargetingCamera_t)(void *self, IL2CPP::CClass* camera, IL2CPP::CClass* targetTexture, IL2CPP::CClass* setting);
-static original_idolTargetingCamera_t Original_idolTargetingCamera = nullptr;
-void Hooked_idolTargetingCamera(void *self, IL2CPP::CClass* camera, IL2CPP::CClass* targetTexture, IL2CPP::CClass* setting) {
+static original_idolTargetingCamera_t original_idolTargetingCamera = nullptr;
+void hooked_idolTargetingCamera(void *self, IL2CPP::CClass* camera, IL2CPP::CClass* targetTexture, IL2CPP::CClass* setting) {
     setting->SetMemberValue<float>("moveRadiusLimit", 100000.0f);
     setting->SetMemberValue<float>("rotateAngleLimit", 360.0f);
     setting->SetMemberValue<float>("panSensitivity", 0.05f);
 	setting->SetMemberValue<Unity::Vector2>("fovRange", Unity::Vector2(10.0f, 150.0f));
-	Original_idolTargetingCamera(self, camera, targetTexture, setting);
+	original_idolTargetingCamera(self, camera, targetTexture, setting);
 }
 
 typedef void (*original_setFocusArea_t)(void *self);
-static original_setFocusArea_t Original_setFocusArea = nullptr;
-void Hooked_setFocusArea(void *self) {
-    Original_setFocusArea(self);
+static original_setFocusArea_t original_setFocusArea = nullptr;
+void hooked_setFocusArea(void *self) {
+    original_setFocusArea(self);
     IL2CPP::CClass* pSelf = reinterpret_cast<IL2CPP::CClass*>(self);
 	Unity::Vector3 focusAreaMaxValue = pSelf->GetMemberValue<Unity::Vector3>("focusAreaMaxValue");
 	Unity::Vector3 focusAreaMinValue = pSelf->GetMemberValue<Unity::Vector3>("focusAreaMinValue");
@@ -313,7 +313,7 @@ void hooked_InitializeStackedCameraData(Unity::CCamera* camera, IL2CPP::CClass* 
 
 typedef RenderTextureDescriptor (*original_CreateRenderTextureDescriptor_t)(Unity::CCamera* camera, float renderScale, bool isHdrEnabled, int msaaSamples, bool needsAlpha, bool requiresOpaqueTexture);
 static original_CreateRenderTextureDescriptor_t original_CreateRenderTextureDescriptor = nullptr;
-RenderTextureDescriptor Hooked_CreateRenderTextureDescriptor(Unity::CCamera* camera, float renderScale, bool isHdrEnabled, int msaaSamples, bool needsAlpha, bool requiresOpaqueTexture)
+RenderTextureDescriptor hooked_CreateRenderTextureDescriptor(Unity::CCamera* camera, float renderScale, bool isHdrEnabled, int msaaSamples, bool needsAlpha, bool requiresOpaqueTexture)
 {
 	Unity::System_String* cameraName = camera->GetName();
 	if (!cameraName) {
@@ -665,6 +665,90 @@ IL2CPP::CClass* hooked_LiveMain_BasePopup_OpenAsync(void* self) {
 	return original_LiveMain_BasePopup_OpenAsync(self);
 }
 
+// Tecotec.StoryUIWindow.Setup(bool skipReturn, int skipLine, float timesec, bool seekbar)
+static void (*original_StoryUIWindow_Setup)(void* self, bool skipReturn, int skipLine, float timesec, bool seekbar) = nullptr;
+void hooked_StoryUIWindow_Setup(void* self, bool skipReturn, int skipLine, float timesec, bool seekbar) {
+	original_StoryUIWindow_Setup(self, skipReturn, skipLine, timesec, seekbar);
+	IL2CPP::CClass* pSelf = reinterpret_cast<IL2CPP::CClass*>(self);
+	if ([qualityConfig[@"Story.Utils.Novel.OpenWithAuto.Enable"] boolValue]) {
+		pSelf->CallMethodSafe<void, int>("NovelAutoSpeed", [qualityConfig[@"Story.Utils.Novel.WaitInterval"] intValue]);
+		pSelf->CallMethodSafe<void, int>("SetNovelWaitInterval", [qualityConfig[@"Story.Utils.Novel.WaitInterval"] boolValue]);
+		pSelf->CallMethodSafe<void, int>("SetNovelTextSpeedMove", [qualityConfig[@"Story.Utils.Novel.TextDisplaySpeed"] boolValue]);
+	}
+
+	if ([qualityConfig[@"Story.Utils.AutoCloseSubtitle.Enable"] boolValue]) {
+		IL2CPP::CClass* menu = pSelf->GetMemberValue<IL2CPP::CClass*>("menu");
+		if (menu) {
+			bool isSubtitle = menu->GetMemberValue<bool>("isSubtitle");
+			if (isSubtitle) {
+				pSelf->CallMethodSafe<void>("OnClickSwitchSubtitle");
+			}
+		}
+	}
+}
+
+// void School.Story.NovelView.Initialize(Camera storySpaceCamera)
+static void (*original_NovelView_Initialize)(void* self, Unity::CCamera* storySpaceCamera) = nullptr;
+void hooked_NovelView_Initialize(void* self, Unity::CCamera* storySpaceCamera) {
+	original_NovelView_Initialize(self, storySpaceCamera);
+	IL2CPP::CClass* pSelf = reinterpret_cast<IL2CPP::CClass*>(self);
+	pSelf->CallMethodSafe<void, float>("ChangeSpeed", [qualityConfig[@"Story.Utils.Novel.TextDisplayAniSpeed"] floatValue]);
+}
+
+// float Tecotec.AddNovelTextCommand.GetDisplayTime(StoryMnemonic mnemonic)
+struct AddNovelTextCommand_GetText_Return {
+	Unity::System_String* Item1;
+	Unity::il2cppArray<IL2CPP::CClass*>* Item2;
+};
+static float (*original_AddNovelTextCommand_GetDisplayTime)(IL2CPP::CClass* mnemonic) = nullptr;
+float hooked_AddNovelTextCommand_GetDisplayTime(IL2CPP::CClass* mnemonic) {
+	IL2CPP::CClass* operands = mnemonic->GetMemberValue<IL2CPP::CClass*>("operands");
+	if (operands) {
+		Unity::il2cppArray<Unity::System_String*>* sValues = operands->GetMemberValue<Unity::il2cppArray<Unity::System_String*>*>("sValues");
+		if (sValues && sValues->m_uMaxLength <= 1) {
+			AddNovelTextCommand_GetText_Return result = IL2CPP::Helper::InvokeStaticMethod<AddNovelTextCommand_GetText_Return, IL2CPP::CClass*>(
+				"Tecotec.AddNovelTextCommand",
+				"GetText",
+				mnemonic
+			);
+			return (float)result.Item1->_stringLength * [qualityConfig[@"Story.Utils.Novel.TextDisplayTime"] floatValue] + [qualityConfig[@"Story.Utils.Novel.PlainTextExtend"] floatValue];
+		}
+	}
+	return original_AddNovelTextCommand_GetDisplayTime(mnemonic) + [qualityConfig[@"Story.Utils.Novel.VoiceTextExtend"] floatValue];
+}
+
+static bool findMethodAndHook(const char* className, const char* methodName, int paramCount, void* hookFunc, void** originalFunc) { 
+	void* pMethod = IL2CPP::Class::Utils::GetMethodPointer(className, methodName, paramCount);
+	if (pMethod) {
+		MSHookFunction_p(
+			pMethod,
+			hookFunc,
+			originalFunc
+		);
+		NSLog(@"[IL2CPP Tweak] Hooked %s::%s", className, methodName);
+		return true;
+	} else {
+		NSLog(@"[IL2CPP Tweak][Failed] Cannot find %s::%s, %d params", className, methodName, paramCount);
+	}
+	return false;
+}
+
+static bool findMethodAndHook(Unity::il2cppClass* pClass, const char* methodName, int paramCount, void* hookFunc, void** originalFunc) { 
+	void* pMethod = IL2CPP::Class::Utils::GetMethodPointer(pClass, methodName, paramCount);
+	if (pMethod) {
+		MSHookFunction_p(
+			pMethod,
+			hookFunc,
+			originalFunc
+		);
+		NSLog(@"[IL2CPP Tweak] Hooked %s::%s", pClass->m_pName, methodName);
+		return true;
+	} else {
+		NSLog(@"[IL2CPP Tweak][Failed] Cannot find %s::%s, %d params", pClass->m_pName, methodName, paramCount);
+	}
+	return false;
+}
+
 static std::unordered_map<const char*, void*> il2cppFuncMap;
 
 static BOOL (*original_didFinishLaunchingWithOptions)(id self, SEL _cmd, UIApplication *application, NSDictionary *launchOptions) = NULL;
@@ -700,327 +784,201 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 
 	if ([qualityConfig[@"Enable.QuestLive.NoParticlesHook"] boolValue]) {
 		// Tecotec.QuestLive.Live.QuestLiveHeartObject.PlayParticles
-		targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+		findMethodAndHook(
 			"Tecotec.QuestLive.Live.QuestLiveHeartObject",
 			"PlayParticles",
-			0
+			0,
+			(void*)hooked_QuestLiveHeartObject_PlayParticles,
+			(void**)&original_QuestLiveHeartObject_PlayParticles
 		);
-
-		if (targetAddress) {
-			MSHookFunction_p(
-				targetAddress,
-				(void*)&hooked_QuestLiveHeartObject_PlayParticles,
-				(void**)&original_QuestLiveHeartObject_PlayParticles
-			);
-			NSLog(@"[IL2CPP Tweak] QuestLiveHeartObject::PlayParticles hooked");
-		} else {
-			NSLog(@"[IL2CPP Tweak] QuestLiveHeartObject::PlayParticles not found.");
-		}
 	}
 
 	if ([qualityConfig[@"Enable.QuestLive.NoThrowAndWaitHook"] boolValue]) {
 		// Tecotec.QuestLive.Live.QuestLiveHeartObject.ShowHeart(bool show)
-		targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+		findMethodAndHook(
 			"Tecotec.QuestLive.Live.QuestLiveHeartObject",
 			"ShowHeart",
-			1
+			1,
+			(void*)hooked_QuestLiveHeartObject_ShowHeart,
+			(void**)&original_QuestLiveHeartObject_ShowHeart
 		);
-
-		if (targetAddress) {
-			MSHookFunction_p(
-				targetAddress,
-				(void*)&hooked_QuestLiveHeartObject_ShowHeart,
-				(void**)&original_QuestLiveHeartObject_ShowHeart
-			);
-			NSLog(@"[IL2CPP Tweak] QuestLiveHeartObject::ShowHeart hooked");
-		} else {
-			NSLog(@"[IL2CPP Tweak] QuestLiveHeartObject::ShowHeart not found.");
-		}
 	}
 
 	if ([qualityConfig[@"Enable.QuestLive.NoCutinCharacterHook"] boolValue]) {
 		// Tecotec.QuestLive.Live.QuestLiveCutinCharacter.PlaySkillAnimation()
-		targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+		findMethodAndHook(
 			"Tecotec.QuestLive.Live.QuestLiveCutinCharacter",
 			"PlaySkillAnimation",
-			0
+			0,
+			(void*)hooked_QuestLiveCutinCharacter_PlaySkillAnimation,
+			(void**)&original_QuestLiveCutinCharacter_PlaySkillAnimation
 		);
-
-		if (targetAddress) {
-			MSHookFunction_p(
-				targetAddress,
-				(void*)&hooked_QuestLiveCutinCharacter_PlaySkillAnimation,
-				(void**)&original_QuestLiveCutinCharacter_PlaySkillAnimation
-			);
-			NSLog(@"[IL2CPP Tweak] QuestLiveCutinCharacter::PlaySkillAnimation hooked");
-		} else {
-			NSLog(@"[IL2CPP Tweak] QuestLiveCutinCharacter::PlaySkillAnimation not found.");
-		}
 	}
 
-	targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+	findMethodAndHook(
 		"Tecotec.TitleSceneController",
 		"SetPlayerId",
-		1
+		1,
+		(void*)hooked_TitleSceneController_SetPlayerId,
+		(void**)&original_TitleSceneController_SetPlayerId
 	);
 
-	if (targetAddress){
-		MSHookFunction_p(
-			targetAddress,
-			(void*)hooked_TitleSceneController_SetPlayerId,
-			(void**)&original_TitleSceneController_SetPlayerId
-		); 
-		NSLog(@"[IL2CPP Tweak] TitleSceneController::SetPlayerId hooked");
-	} else {
-		NSLog(@"[IL2CPP Tweak] TitleSceneController::SetPlayerId not found.");
-	}
+	
 
-	targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
-		"School.LiveMain.SchoolResolution",
-		"GetResolution",
-		2
-	);
-
-	if ([qualityConfig[@"Enable.LiveStreamQualityHook"] boolValue] && targetAddress) {
-		MSHookFunction_p(
-			targetAddress,
-			(void*)Hooked_GetResolution,
-			(void**)&Original_GetResolution
+	if ([qualityConfig[@"Enable.LiveStreamQualityHook"] boolValue]) {
+		findMethodAndHook(
+			"School.LiveMain.SchoolResolution",
+			"GetResolution",
+			2,
+			(void*)hooked_GetResolution,
+			(void**)&original_GetResolution
 		);
-
-		NSLog(@"[IL2CPP Tweak] Successfully hooked GetResolution!");
 
 		// Inspix.AlphaBlendCamera.UpdateAlpha(float newAlpha)
-		targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+		findMethodAndHook(
 			"Inspix.AlphaBlendCamera",
 			"UpdateAlpha",
-			1
+			1,
+			(void*)hooked_AlphaBlendCamera_UpdateAlpha,
+			(void**)&original_AlphaBlendCamera_UpdateAlpha
 		);
-
-		if (targetAddress) {
-			MSHookFunction_p(
-				targetAddress,
-				(void*)hooked_AlphaBlendCamera_UpdateAlpha,
-				(void**)&original_AlphaBlendCamera_UpdateAlpha
-			);
-			NSLog(@"[IL2CPP Tweak] AlphaBlendCamera::UpdateAlpha hooked");
-		}
 	}
 
-	targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
-		"UnityEngine.Application",
-		"set_targetFrameRate",
-		1
-	);
-
-	if ([qualityConfig[@"Enable.FrameRateHook"] boolValue] && targetAddress) { 
-		MSHookFunction_p(
-			targetAddress,
-			(void*)Hooked_set_targetFrameRate,
-			(void**)&Original_set_targetFrameRate
+	if ([qualityConfig[@"Enable.FrameRateHook"] boolValue]) { 
+		findMethodAndHook(
+			"UnityEngine.Application",
+			"set_targetFrameRate",
+			1,
+			(void*)hooked_set_targetFrameRate,
+			(void**)&original_set_targetFrameRate
 		);
-		NSLog(@"[IL2CPP Tweak] Successfully hooked set_targetFrameRate!");
 	}
 
 	if (qualityConfig[@"Enable.LiveStreamQualityHook"] && qualityConfig[@"Enable.StoryQualityHook"]) {
 		if (Unity2022_3_62F) {
-			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+			findMethodAndHook(
 				"Tecotec.FesLiveSettingsView",
 				"Initialize",
-				0
-			);
-		} else {
-			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
-				"Tecotec.FesLiveSettingsView",
-				"InitButtons",
-				0
-			);
-		}
-
-		if (targetAddress) {
-			MSHookFunction_p(
-				targetAddress,
+				0,
 				(void*)hooked_FesLiveSettingsView_InitButtons,
 				(void**)&original_FesLiveSettingsView_InitButtons
 			);
-			NSLog(@"[IL2CPP Tweak] FesLiveSettingsView::InitButtons hooked");
+		} else {
+			findMethodAndHook(
+				"Tecotec.FesLiveSettingsView",
+				"InitButtons",
+				0,
+				(void*)hooked_FesLiveSettingsView_InitButtons,
+				(void**)&original_FesLiveSettingsView_InitButtons
+			);
 		}
 	}
 
-	targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
-		"UnityEngine.QualitySettings",
-		"set_antiAliasing",
-		1
-	);
-
-	if ([qualityConfig[@"Enable.AntiAliasingHook"] boolValue] && targetAddress) {
-		MSHookFunction_p(
-			targetAddress,
-			(void*)Hooked_set_antiAliasing,
-			(void**)&Original_set_antiAliasing
+	if ([qualityConfig[@"Enable.AntiAliasingHook"] boolValue]) {
+		findMethodAndHook(
+			"UnityEngine.QualitySettings",
+			"set_antiAliasing",
+			1,
+			(void*)hooked_set_antiAliasing,
+			(void**)&original_set_antiAliasing
 		);
-		NSLog(@"[IL2CPP Tweak] Successfully hooked set_antiAliasing!");
 	}
 
 	if ([qualityConfig[@"Enable.MagicaClothHook"] boolValue]) {
-		targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+		findMethodAndHook(
 			"MagicaCloth2.MagicaManager",
 			"SetSimulationFrequency",
-			1
+			1,
+			(void*)hooked_MagicaManager_SetSimulationFrequency,
+			(void**)&original_MagicaManager_SetSimulationFrequency
 		);
 
-		if (targetAddress) {
-			MSHookFunction_p(
-				targetAddress,
-				(void*)hooked_MagicaManager_SetSimulationFrequency,
-				(void**)&original_MagicaManager_SetSimulationFrequency
-			);
-			NSLog(@"[IL2CPP Tweak] Successfully hooked SetSimulationFrequency!");
-		}
-
-		targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+		findMethodAndHook(
 			"MagicaCloth2.MagicaManager",
 			"SetMaxSimulationCountPerFrame",
-			1
+			1,
+			(void*)hooked_MagicaManager_SetMaxSimulationCountPerFrame,
+			(void**)&original_MagicaManager_SetMaxSimulationCountPerFrame
 		);
-
-		if (targetAddress) {
-			MSHookFunction_p(
-				targetAddress,
-				(void*)hooked_MagicaManager_SetMaxSimulationCountPerFrame,
-				(void**)&original_MagicaManager_SetMaxSimulationCountPerFrame
-			);
-			NSLog(@"[IL2CPP Tweak] Successfully hooked SetMaxSimulationCountPerFrame!");
-		}
 	}
 
 	if ([qualityConfig[@"Enable.StoryQualityHook"] boolValue]) {
 		if (!Unity2022_3_62F) {
-			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+			findMethodAndHook(
 				"UnityEngine.Rendering.Universal.UniversalRenderPipeline",
 				"CreateRenderTextureDescriptor",
-				6
+				6,
+				(void*)hooked_CreateRenderTextureDescriptor,
+				(void**)&original_CreateRenderTextureDescriptor
 			);
-
-			if (targetAddress) {
-				MSHookFunction_p(
-					targetAddress,
-					(void*)Hooked_CreateRenderTextureDescriptor,
-					(void**)&original_CreateRenderTextureDescriptor
-				);
-				NSLog(@"[IL2CPP Tweak] Successfully hooked CreateRenderTextureDescriptor!");
-			}
 		} else {
 			// void UnityEngine.Rendering.Universal.UniversalRenderPipeline.InitializeStackedCameraData(Camera* camera, UniversalAdditionalCameraData* additionalCameraData, CameraData* cameraData)
-			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+			findMethodAndHook(
 				"UnityEngine.Rendering.Universal.UniversalRenderPipeline",
 				"InitializeStackedCameraData",
-				3
+				3,
+				(void*)hooked_InitializeStackedCameraData,
+				(void**)&original_InitializeStackedCameraData
 			);
-
-			if (targetAddress) {
-				MSHookFunction_p(
-					targetAddress,
-					(void*)hooked_InitializeStackedCameraData,
-					(void**)&original_InitializeStackedCameraData
-				);
-				NSLog(@"[IL2CPP Tweak] Successfully hooked InitializeStackedCameraData 2022.3.62F2!");
-			}
 		}
 	}
 
-	targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
-		"School.LiveMain.FesLiveFixedCamera",
-		".ctor",
-		4
-	);
-
-	if ([qualityConfig[@"Enable.FesCameraHook"] boolValue] && targetAddress) {
-		MSHookFunction_p(
-			targetAddress,
-			(void*)Hooked_fesLiveFixedCameraCtor,
-			(void**)&Original_fesLiveFixedCameraCtor
+	if ([qualityConfig[@"Enable.FesCameraHook"] boolValue]) {
+		findMethodAndHook(
+			"School.LiveMain.FesLiveFixedCamera",
+			".ctor",
+			4,
+			(void*)hooked_fesLiveFixedCameraCtor,
+			(void**)&original_fesLiveFixedCameraCtor
 		);
-		NSLog(@"[IL2CPP Tweak] Successfully hooked FesLiveFixedCamera!");
 	}
 
-	targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
-		"School.LiveMain.IdolTargetingCamera",
-		".ctor",
-		3
-	);
-
-	if ([qualityConfig[@"Enable.FesCameraHook"] boolValue] && targetAddress) {
-		MSHookFunction_p(
-			targetAddress,
-			(void*)Hooked_idolTargetingCamera,
-			(void**)&Original_idolTargetingCamera
+	if ([qualityConfig[@"Enable.FesCameraHook"] boolValue]) {
+		findMethodAndHook(
+			"School.LiveMain.IdolTargetingCamera",
+			".ctor",
+			3,
+			(void*)hooked_idolTargetingCamera,
+			(void**)&original_idolTargetingCamera
 		);
-		NSLog(@"[IL2CPP Tweak] Successfully hooked IdolTargetingCamera!");
 	}
 
-	targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
-		"Inspix.Character.IsFocusableChecker",
-		"SetFocusArea",
-		0
-	);
-
-	if (![qualityConfig[@"Enable.FocusAreaDelimiterHook"] boolValue] && targetAddress) {
-		MSHookFunction_p(
-			targetAddress,
-			(void*)Hooked_setFocusArea,
-			(void**)&Original_setFocusArea
+	if (![qualityConfig[@"Enable.FocusAreaDelimiterHook"] boolValue]) {
+		findMethodAndHook(
+			"Inspix.Character.IsFocusableChecker",
+			"SetFocusArea",
+			0,
+			(void*)hooked_setFocusArea,
+			(void**)&original_setFocusArea
 		);
-		NSLog(@"[IL2CPP Tweak] Successfully hooked IsFocusableChecker!");
 	}
-
-	targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
-		"Inspix.Character.IsFocusableChecker",
-		"SetIsFocusAllowed",
-		1
-	);
 
 	if ([qualityConfig[@"Enable.FocusAreaDelimiterHook"] boolValue]) {
-		if (targetAddress) { 
-			MSHookFunction_p(
-				targetAddress,
-				(void*)&hooked_IsFocusableChecker_SetIsFocusAllowed,
-				(void**)&original_IsFocusableChecker_SetIsFocusAllowed
-			);
-			NSLog(@"[IL2CPP Tweak] Inspix.Character.IsFocusableChecker::SetIsFocusAllowed hooked");
-		}
-
-		targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+		findMethodAndHook(
 			"Inspix.Character.IsFocusableChecker",
-			"IsInFocusableArea",
-			0
+			"SetIsFocusAllowed",
+			1,
+			(void*)hooked_IsFocusableChecker_SetIsFocusAllowed,
+			(void**)&original_IsFocusableChecker_SetIsFocusAllowed
 		);
 
-		if (targetAddress) { 
-			MSHookFunction_p(
-				targetAddress,
-				(void*)&hooked_IsFocusableChecker_IsInFocusableArea,
-				(void**)&original_IsFocusableChecker_IsInFocusableArea
-			);
-			NSLog(@"[IL2CPP Tweak] Inspix.Character.IsFocusableChecker::IsInFocusableArea hooked");
-		}
+		findMethodAndHook(
+			"Inspix.Character.IsFocusableChecker",
+			"IsInFocusableArea",
+			0,
+			(void*)hooked_IsFocusableChecker_IsInFocusableArea,
+			(void**)&original_IsFocusableChecker_IsInFocusableArea
+		);
 	}
 
 	if ([qualityConfig[@"Enable.LiveStreamCoverRemoverHook"] boolValue]) {
-		targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+		findMethodAndHook(
 			"Inspix.CoverImageCommandReceiver",
 			"<Awake>b__9_0",
-			1
+			1,
+			(void*)hooked_CoverImageCommandReceiver_Awakeb90,
+			(void**)&original_CoverImageCommandReceiver_Awakeb90
 		);
-
-		if (targetAddress) {
-			MSHookFunction_p(
-				targetAddress,
-				(void*)&hooked_CoverImageCommandReceiver_Awakeb90,
-				(void**)&original_CoverImageCommandReceiver_Awakeb90
-			);
-			NSLog(@"[IL2CPP Tweak] CoverImageCommandReceiver Awake hooked");
-		}
 
 		targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
 			"Inspix.Character.FootShadow.FootShadowManipulator",
@@ -1044,222 +1002,165 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 				(void**)&original_FootShadowManipulator_SetupObservePropertyb150
 			);
 			NSLog(@"[IL2CPP Tweak] FootShadowManipulator::<SetupObserveProperty>b__15_0 hooked");
+		} else {
+			NSLog(@"[IL2CPP Tweak] FootShadowManipulator::<SetupObserveProperty>b__15_0 not found");
 		}
 
-		targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+		findMethodAndHook(
 			"Inspix.Character.CharacterVisibleController",
 			"SetVisible",
-			1
+			1,
+			(void*)hooked_CharacterVisibleController_SetVisible,
+			(void**)&original_CharacterVisibleController_SetVisible
 		);
 
-		if (targetAddress) {
-			MSHookFunction_p(
-				targetAddress,
-				(void*)&hooked_CharacterVisibleController_SetVisible,
-				(void**)&original_CharacterVisibleController_SetVisible
-			);
-			NSLog(@"[IL2CPP Tweak] CharacterVisibleController::SetVisible hooked");
-		}
-
-		targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+		findMethodAndHook(
 			"Inspix.FocusableCharacter",
 			"<.ctor>b__5_0",
-			1
+			1,
+			(void*)hooked_FocusableCharacter_ctor_b50,
+			(void**)&original_FocusableCharacter_ctor_b50
 		);
-
-		if (targetAddress) {
-			MSHookFunction_p(
-				targetAddress,
-				(void*)&hooked_FocusableCharacter_ctor_b50,
-				(void**)&original_FocusableCharacter_ctor_b50
-			);
-			NSLog(@"[IL2CPP Tweak] FocusableCharacter::<.ctor>b__5_0 hooked");
-		}
 
 		// void School.LiveMain.LiveConnectChapterModel.UpdateAvailableChapterCount()
-		targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+		findMethodAndHook(
 			"School.LiveMain.LiveConnectChapterModel",
 			"UpdateAvailableChapterCount",
-			0
+			0,
+			(void*)hooked_LiveConnectChapterModel_UpdateAvailableChapterCount,
+			(void**)&original_LiveConnectChapterModel_UpdateAvailableChapterCount
 		);
-
-		if (targetAddress) {
-			MSHookFunction_p(
-				targetAddress,
-				(void*)&hooked_LiveConnectChapterModel_UpdateAvailableChapterCount,
-				(void**)&original_LiveConnectChapterModel_UpdateAvailableChapterCount
-			);
-			NSLog(@"[IL2CPP Tweak] LiveConnectChapterModel::UpdateAvailableChapterCount hooked");
-		}
 	}
 
 	if ([qualityConfig[@"Enable.LiveStream.NoAfterLimitationHook"] boolValue]) {
 		// void School.LiveMain.ChapterRecord..ctor(int chapterNo, string title, float startSeconds, bool isExtra)
-		targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+		findMethodAndHook(
 			"School.LiveMain.ChapterRecord",
 			".ctor",
-			4
+			4,
+			(void*)hooked_LiveMain_ChapterRecord_ctor,
+			(void**)&original_LiveMain_ChapterRecord_ctor
 		);
-
-		if (targetAddress) {
-			MSHookFunction_p(
-				targetAddress,
-				(void*)&hooked_LiveMain_ChapterRecord_ctor,
-				(void**)&original_LiveMain_ChapterRecord_ctor
-			);
-			NSLog(@"[IL2CPP Tweak] LiveMain.ChapterRecord::.ctor hooked");
-		}
 
 		// (int, bool, bool) School.LiveMain.GiftPointModel::<MakeExtraAdmissionObservable>b__50_0(WithliveLiveInfoResponse response)
-		targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+		findMethodAndHook(
 			"School.LiveMain.GiftPointModel",
 			"<MakeExtraAdmissionObservable>b__50_0",
-			1
+			1,
+			(void*)hooked_GiftPointModel_MakeExtraAdmissionObservable_b_50,
+			(void**)&original_GiftPointModel_MakeExtraAdmissionObservable_b_50
 		);
-
-		if (targetAddress) {
-			MSHookFunction_p(
-				targetAddress,
-				(void*)&hooked_GiftPointModel_MakeExtraAdmissionObservable_b_50,
-				(void**)&original_GiftPointModel_MakeExtraAdmissionObservable_b_50
-			);
-			NSLog(@"[IL2CPP Tweak] GiftPointModel::<MakeExtraAdmissionObservable>b__50_0 hooked");
-		}
 
 		// (int, bool, bool) School.LiveMain.GiftPointModel::<MakeExtraAdmissionObservable>b__51_0(FesliveLiveInfoResponse response)
-		targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+		findMethodAndHook(
 			"School.LiveMain.GiftPointModel",
 			"<MakeExtraAdmissionObservable>b__51_0",
-			1
+			1,
+			(void*)hooked_GiftPointModel_MakeExtraAdmissionObservable_b_51,
+			(void**)&original_GiftPointModel_MakeExtraAdmissionObservable_b_51
 		);
-
-		if (targetAddress) {
-			MSHookFunction_p(
-				targetAddress,
-				(void*)&hooked_GiftPointModel_MakeExtraAdmissionObservable_b_51,
-				(void**)&original_GiftPointModel_MakeExtraAdmissionObservable_b_51
-			);
-			NSLog(@"[IL2CPP Tweak] GiftPointModel::<MakeExtraAdmissionObservable>b__51_0 hooked");
-		}
 	}
 
 	if ([qualityConfig[@"Enable.LiveStream.NoFesCameraLimitationHook"] boolValue]) {
 		// School.LiveMain.CameraSelectModel(string liveId, IEnumerable<LiveCameraType> allowedCameraTypes, LiveCameraType selectedCameraType, IEnumerable<int> characterIds, int focusedCharacterId, LiveTicketRank ticketRank, LiveContentType contentType)
-		targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+		findMethodAndHook(
 			"School.LiveMain.CameraSelectModel",
 			".ctor",
-			7
+			7,
+			(void*)hooked_CameraSelectModel_ctor,
+			(void**)&original_CameraSelectModel_ctor
 		);
-
-		if (targetAddress) {
-			MSHookFunction_p(
-				targetAddress,
-				(void*)&hooked_CameraSelectModel_ctor,
-				(void**)&original_CameraSelectModel_ctor
-			);
-			NSLog(@"[IL2CPP Tweak] CameraSelectModel::.ctor hooked");
-		}
 
 		Unity::il2cppClass* cameraSelectModel_DisplayClass9_0 = IL2CPP::Class::Utils::GetNestedClass("School.LiveMain.CameraSelectModel", "<>c__DisplayClass9_0");
 		if (cameraSelectModel_DisplayClass9_0) {
-			targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+			findMethodAndHook(
 				cameraSelectModel_DisplayClass9_0,
 				"<.ctor>b__0",
-				0
+				0,
+				(void*)hooked_LiveMain_CameraSelectModel_DisplayClass9_0_ctor_b_0,
+				(void**)&original_LiveMain_CameraSelectModel_DisplayClass9_0_ctor_b_0
 			);
-			if (targetAddress) {
-				MSHookFunction_p(
-					targetAddress,
-					(void*)&hooked_LiveMain_CameraSelectModel_DisplayClass9_0_ctor_b_0,
-					(void**)&original_LiveMain_CameraSelectModel_DisplayClass9_0_ctor_b_0
-				);
-				NSLog(@"[IL2CPP Tweak] CameraSelectModel::<>c__DisplayClass9_0::<.ctor>b__0 hooked");
-			}
 		}
 
 		// School.LiveMain.CameraTypeSelectNodeView.UpdateContent(CameraTypeSelectNodeData nodeData)
-		targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+		findMethodAndHook(
 			"School.LiveMain.CameraTypeSelectNodeView",
 			"UpdateContent",
-			1
+			1,
+			(void*)hooked_CameraTypeSelectNodeView_UpdateContent,
+			(void**)&original_CameraTypeSelectNodeView_UpdateContent
 		);
-
-		if (targetAddress) {
-			MSHookFunction_p(
-				targetAddress,
-				(void*)&hooked_CameraTypeSelectNodeView_UpdateContent,
-				(void**)&original_CameraTypeSelectNodeView_UpdateContent
-			);
-			NSLog(@"[IL2CPP Tweak] CameraTypeSelectNodeView::UpdateContent hooked");
-		}
 	}
 
 	if ([qualityConfig[@"Enable.NoOrientationHook"] boolValue]) {
 		// Inspix.PlayerGameViewUtilsImpl.SetPortraitImpl()
-		targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+		findMethodAndHook(
 			"Inspix.PlayerGameViewUtilsImpl",
 			"SetPortraitImpl",
-			0
+			0,
+			(void*)hooked_PlayerGameViewUtilsImpl_SetPortraitImpl,
+			(void**)&original_PlayerGameViewUtilsImpl_SetPortraitImpl
 		);
-
-		if (targetAddress) {
-			MSHookFunction_p(
-				targetAddress,
-				(void*)&hooked_PlayerGameViewUtilsImpl_SetPortraitImpl,
-				(void**)&original_PlayerGameViewUtilsImpl_SetPortraitImpl
-			);
-			NSLog(@"[IL2CPP Tweak] PlayerGameViewUtilsImpl::SetPortraitImpl hooked");
-		}
 
 		// Inspix.PlayerGameViewUtilsImpl.SetLandscapeImpl()
-		targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+		findMethodAndHook(
 			"Inspix.PlayerGameViewUtilsImpl",
 			"SetLandscapeImpl",
-			0
+			0,
+			(void*)hooked_PlayerGameViewUtilsImpl_SetLandscapeImpl,
+			(void**)&original_PlayerGameViewUtilsImpl_SetLandscapeImpl
 		);
-
-		if (targetAddress) {
-			MSHookFunction_p(
-				targetAddress,
-				(void*)&hooked_PlayerGameViewUtilsImpl_SetLandscapeImpl,
-				(void**)&original_PlayerGameViewUtilsImpl_SetLandscapeImpl
-			);
-			NSLog(@"[IL2CPP Tweak] PlayerGameViewUtilsImpl::SetLandscapeImpl hooked");
-		}
 
 		// Inspix.PlayerGameViewUtilsImpl.CurrentOrientationIsImpl(int deviceOrientation)
-		targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+		findMethodAndHook(
 			"Inspix.PlayerGameViewUtilsImpl",
 			"CurrentOrientationIsImpl",
-			1
+			1,
+			(void*)hooked_PlayerGameViewUtilsImpl_CurrentOrientationIsImpl,
+			(void**)&original_PlayerGameViewUtilsImpl_CurrentOrientationIsImpl
 		);
-
-		if (targetAddress) {
-			MSHookFunction_p(
-				targetAddress,
-				(void*)&hooked_PlayerGameViewUtilsImpl_CurrentOrientationIsImpl,
-				(void**)&original_PlayerGameViewUtilsImpl_CurrentOrientationIsImpl
-			);
-			NSLog(@"[IL2CPP Tweak] PlayerGameViewUtilsImpl::CurrentOrientationIsImpl hooked");
-		}
 	}
 
 	if ([qualityConfig[@"Enable.LandscapePopupSizeFixHook"] boolValue]) {
 		// Inspix.LiveMain.BasePopup.OpenAsync()
-		targetAddress = IL2CPP::Class::Utils::GetMethodPointer(
+		findMethodAndHook(
 			"Inspix.LiveMain.BasePopup",
 			"OpenAsync",
-			0
+			0,
+			(void*)hooked_LiveMain_BasePopup_OpenAsync,
+			(void**)&original_LiveMain_BasePopup_OpenAsync
+		);
+	}
+
+	if ([qualityConfig[@"Story.Utils.AutoCloseSubtitle.Enable"] boolValue] || [qualityConfig[@"Story.Utils.Novel.OpenWithAuto.Enable"] boolValue]) {
+		// Tecotec.StoryUIWindow.Setup(bool skipReturn, int skipLine, float timesec, bool seekbar)
+		findMethodAndHook(
+			"Tecotec.StoryUIWindow",
+			"Setup",
+			4,
+			(void*)hooked_StoryUIWindow_Setup,
+			(void**)&original_StoryUIWindow_Setup
+		);
+	}
+
+	if ([qualityConfig[@"Story.Utils.Novel.Advanced.Enable"] boolValue]) {
+		// void School.Story.NovelView.Initialize(Camera storySpaceCamera)
+		findMethodAndHook(
+			"School.Story.NovelView",
+			"Initialize",
+			1,
+			(void*)hooked_NovelView_Initialize,
+			(void**)&original_NovelView_Initialize
 		);
 
-		if (targetAddress) { 
-			MSHookFunction_p(
-				targetAddress,
-				(void*)&hooked_LiveMain_BasePopup_OpenAsync,
-				(void**)&original_LiveMain_BasePopup_OpenAsync
-			);
-			NSLog(@"[IL2CPP Tweak] BasePopup::OpenAsync hooked");
-		}
+		// float Tecotec.AddNovelTextCommand.GetDisplayTime(StoryMnemonic mnemonic)
+		findMethodAndHook(
+			"Tecotec.AddNovelTextCommand",
+			"GetDisplayTime",
+			1,
+			(void*)hooked_AddNovelTextCommand_GetDisplayTime,
+			(void**)&original_AddNovelTextCommand_GetDisplayTime
+		);
 	}
 
 	return result;
@@ -1330,6 +1231,15 @@ static void tweakConstructor() {
 		@1.4f, @"Story.Quality.Medium.Factor",
 		@1.8f, @"Story.Quality.High.Factor",
 		@false, @"Story.Quality.FSRUpscaling.Enable",
+		@false, @"Story.Utils.AutoCloseSubtitle.Enable",
+		@false, @"Story.Utils.Novel.OpenWithAuto.Enable",
+		@1, @"Story.Utils.Novel.WaitInterval",
+		@1, @"Story.Utils.Novel.TextDisplaySpeed",
+		@false, @"Story.Utils.Novel.Advanced.Enable",
+		@1.0, @"Story.Utils.Novel.TextDisplayAniSpeed",
+		@0.06, @"Story.Utils.Novel.TextDisplayTime",
+		@0.0, @"Story.Utils.Novel.VoiceTextExtend",
+		@0.0, @"Story.Utils.Novel.PlainTextExtend",
 		@120, @"MagicaCloth.SimulationFrequency",
 		@5, @"MagicaCloth.MaxSimulationCountPerFrame",
 		@60, @"TargetFPS",

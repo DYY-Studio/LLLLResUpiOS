@@ -63,8 +63,9 @@ iOS17.4以上设备使用[SkitDebug](https://github.com/StephenDev0/StikDebug)�
 # 自定义配置
 1. 拷贝`LLLLResUpiOS.json`到`LiveContainer/Tweaks/<文件夹名称>`下，和`LLLLResUpiOS.dylib`在同一目录
 2. 编辑其中内容即可，启动时会自动读取
+    - 在设备上编辑时，推荐使用`Code Editor`
 
-| 配置 | 典型值 | 对象 | 介绍 |
+| 配置 | 默认值 | 对象 | 介绍 |
 | --- | :-: | :-: | --- |
 ||||
 |`Enable.LiveStreamQualityHook`|true| [LiveStream]| 启用LiveStream质量调整 |
@@ -77,6 +78,16 @@ iOS17.4以上设备使用[SkitDebug](https://github.com/StephenDev0/StikDebug)�
 | >> `Story.Quality.Medium.Factor`|1.2| [Story] | 质量`中`的分辨率缩放因子 |
 | >> `Story.Quality.High.Factor`|1.6| [Story] | 质量`高`的分辨率缩放因子 |
 | >> `Story.Quality.FSRScaling.Enable`|false| [Story] | *LLLL 4.9.0+*<br>使用FSR实现分辨率缩放 |
+||||
+| `Story.Utils.AutoCloseSubtitle.Enable`| false | [Story] | 自动关闭字幕 |
+| `Story.Utils.Novel.OpenWithAuto.Enable`| false | [Story] | 视觉小说模式自动启用Auto |
+| >> `Story.Utils.Novel.WaitInterval`| 1 | [Story] | Auto句间隔 1 / 2 / 3 |
+| >> `Story.Utils.Novel.TextDisplaySpeed`| 1 | [Story] | 字显示速度 1 / 2 / 3 |
+| `Story.Utils.Novel.Advanced.Enable`| false | [Story] | 启用高级设置 |
+| >> `Story.Utils.Novel.TextDisplayAniSpeed` | 1.0 | [Story] | 渐显动画速度（倍） |
+| >> `Story.Utils.Novel.TextDisplayTime`| 0.06 | [Story] | 每字符显示时长（秒） |
+| >> `Story.Utils.Novel.VoiceTextExtend`| 0.0 | [Story] | 延长带音频文本显示时间（秒） |
+| >> `Story.Utils.Novel.PlainTextExtend`| 0.0 | [Story] | 延长一般文本显示时间（秒） |
 ||||
 |`Enable.MagicaClothHook`|true| [LiveStream]<br>[Story]| 启用布料模拟调整 |
 |>> `MagicaCloth.SimulationFrequency`|120| [LiveStream]<br>[Story]| 布料模拟频率 |
