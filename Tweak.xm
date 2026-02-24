@@ -696,7 +696,7 @@ float hooked_AddNovelTextCommand_GetDisplayTime(IL2CPP::CClass* mnemonic) {
 }
 
 // Tecotec.TPopupQuestLiveSettings.SetHeartShowLimitValue(int32_t value, bool playSe)
-static void (*original_TPopupQuestLiveSettings_SetHeartShowLimitValue)(void* self, int32_t value, bool playSe) = nullptr;
+static void (*original_TPopupQuestLiveSettings_SetHeartShowLimitValue)(void* self, int value, bool playSe) = nullptr;
 void hooked_TPopupQuestLiveSettings_SetHeartShowLimitValue(void* self, int value, bool playSe) {
 	IL2CPP::CClass* globalInstance = get_GlobalInstance();
 	IL2CPP::CClass* pSelf = reinterpret_cast<IL2CPP::CClass*>(self);
