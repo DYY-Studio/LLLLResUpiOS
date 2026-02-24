@@ -734,7 +734,7 @@ void hooked_TPopupQuestLiveSettings_SetHeartShowLimitValue(void* self, int value
 		if (heartShowLimitCount != nullptr) {
 			int currentValue = heartShowLimitCount->CallMethodSafe<int>("get_Value");
 			if (currentValue != clampedValue) {
-				heartShowLimitCount->SetMemberValue<int>("internalValue", clampedValue);
+				pSelf->CallMethodSafe<void, float>("SetHeartShowLimit", (float)clampedValue);
 			}
 		}
 	}
