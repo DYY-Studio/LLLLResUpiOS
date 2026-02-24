@@ -31,12 +31,15 @@ struct Resolution { int width; int height; int refreshRate; };
 enum LiveAreaQuality { Low, Medium, High };
 enum LiveScreenOrientation { Landscape, Portrait };
 
-IL2CPP::CClass* get_SaveData() {
-	IL2CPP::CClass* instance = IL2CPP::Helper::InvokeStaticMethod<IL2CPP::CClass*>(
+IL2CPP::CClass* get_GlobalInstance() {
+	return IL2CPP::Helper::InvokeStaticMethod<IL2CPP::CClass*>(
 		"Global",
 		"get_Instance"
 	);
-	return instance->GetPropertyValue<IL2CPP::CClass*>("SaveData");
+}
+
+IL2CPP::CClass* get_SaveData() {
+	return get_GlobalInstance()->GetPropertyValue<IL2CPP::CClass*>("SaveData");
 }
 
 LiveAreaQuality get_RenderTextureQuality() {
@@ -342,9 +345,6 @@ RenderTextureDescriptor hooked_CreateRenderTextureDescriptor(Unity::CCamera* cam
 				targetTexture->SetPropertyValue<int>("width", floor(width * storyFactor));
 				targetTexture->SetPropertyValue<int>("height", floor(height * storyFactor));
 				targetTexture->SetPropertyValue<int>("antiAliasing", [qualityConfig[@"AntiAliasingSamples"] intValue]);
-				// targetTexture->SetPropertyValue<bool>("autoGenerateMips", true);
-				// targetTexture->SetPropertyValue<bool>("useMipMap", true);
-				// targetTexture->SetPropertyValue<bool>("useDynamicScale", true);
 			}
 		}
 	}
@@ -356,13 +356,6 @@ original_MagicaManager_SetSimulationFrequency_t original_MagicaManager_SetSimula
 void hooked_MagicaManager_SetSimulationFrequency(int frequency)
 {
 	original_MagicaManager_SetSimulationFrequency([qualityConfig[@"MagicaCloth.SimulationFrequency"] intValue]);
-// 	bool isPlaying = IL2CPP::Helper::InvokeStaticMethod<bool>("MagicaCloth2.MagicaManager", "IsPlaying");
-// 	if (isPlaying) {
-// 		IL2CPP::CClass* time = IL2CPP::Helper::InvokeStaticMethod<IL2CPP::CClass*>("MagicaCloth2.MagicaManager", "get_Time");
-// 		if (time) {
-// 			time->SetMemberValue<int>("simulationFrequency", [qualityConfig[@"MagicaCloth.SimulationFrequency"] intValue]);
-// 		}
-// 	}
 }
 
 typedef void (*original_MagicaManager_SetMaxSimulationCountPerFrame_t)(int count);
@@ -370,13 +363,6 @@ static original_MagicaManager_SetMaxSimulationCountPerFrame_t original_MagicaMan
 void hooked_MagicaManager_SetMaxSimulationCountPerFrame(int count)
 {
 	original_MagicaManager_SetMaxSimulationCountPerFrame([qualityConfig[@"MagicaCloth.MaxSimulationCountPerFrame"] intValue]);
-	// bool isPlaying = IL2CPP::Helper::InvokeStaticMethod<bool>("MagicaCloth2.MagicaManager", "IsPlaying");
-	// if (isPlaying) {
-	// 	IL2CPP::CClass* time = IL2CPP::Helper::InvokeStaticMethod<IL2CPP::CClass*>("MagicaCloth2.MagicaManager", "get_Time");
-	// 	if (time) {
-	// 		time->SetMemberValue<int>("maxSimulationCountPerFrame", [qualityConfig[@"MagicaCloth.MaxSimulationCountPerFrame"] intValue]);
-	// 	}
-	// }
 }
 
 typedef void (*original_IsFocusableChecker_SetIsFocusAllowed_t)(void* self, bool isFocusAllowed);
@@ -482,14 +468,6 @@ void hooked_FesLiveSettingsView_InitButtons(void* self) {
 			] UTF8String]
 	));
 }
-
-// Tecotec.QuestLive.Live.QuestLiveHeartObject.PlayThrowAnimation
-// typedef void (*original_QuestLiveHeartObject_PlayThrowAnimation_t)(void* self, float duration, IL2CPP::CClass* playWaitAnimation);
-// original_QuestLiveHeartObject_PlayThrowAnimation_t original_QuestLiveHeartObject_PlayThrowAnimation = nullptr;
-// void hooked_QuestLiveHeartObject_PlayThrowAnimation(void* self, float duration, IL2CPP::CClass* playWaitAnimation) {
-// 	IL2CPP::CClass *pSelf = reinterpret_cast<IL2CPP::CClass*>(self);
-// 	pSelf->CallMethodSafe<void>("KillThrowAnimation");
-// }
 
 // Tecotec.QuestLive.Live.QuestLiveHeartObject.PlayParticles()
 typedef void (*original_QuestLiveHeartObject_PlayParticles_t)(void* self);
@@ -717,6 +695,77 @@ float hooked_AddNovelTextCommand_GetDisplayTime(IL2CPP::CClass* mnemonic) {
 	return original_AddNovelTextCommand_GetDisplayTime(mnemonic) + [qualityConfig[@"Story.Utils.Novel.VoiceTextExtend"] floatValue];
 }
 
+// Tecotec.TPopupQuestLiveSettings.SetHeartShowLimitValue(int32_t value, bool playSe)
+static void (*original_TPopupQuestLiveSettings_SetHeartShowLimitValue)(void* self, int32_t value, bool playSe) = nullptr;
+void hooked_TPopupQuestLiveSettings_SetHeartShowLimitValue(void* self, int value, bool playSe) {
+	IL2CPP::CClass* globalInstance = get_GlobalInstance();
+	IL2CPP::CClass* pSelf = reinterpret_cast<IL2CPP::CClass*>(self);
+
+	if (playSe) {
+		IL2CPP::CClass* soundManager = globalInstance->GetMemberValue<IL2CPP::CClass*>("<SoundManager>k__BackingField");
+		Unity::System_String* cueName = nullptr;
+		bool isQuestScene = IL2CPP::Helper::InvokeStaticMethod<bool>(
+			"GameDefine.QuestScene",
+			"IsQuestScene"
+		);
+		if (isQuestScene) { 
+			cueName = IL2CPP::Helper::InvokeStaticMethod<Unity::System_String*>(
+				"Tecotec.CriCueName",
+				"QuestTap",
+				1
+			);
+		} else {
+			cueName = IL2CPP::Helper::InvokeStaticMethod<Unity::System_String*>(
+				"Tecotec.CriCueName",
+				"UiTap",
+				3
+			);
+		}
+		if (cueName != nullptr) {
+			soundManager->CallMethodSafe<void, Unity::System_String*, int>("PlaySystemSe", cueName, 0);
+		}
+	}
+
+	int clampedValue = MIN(MAX(value, 0), 100);
+	IL2CPP::CClass* saveData = globalInstance->GetMemberValue<IL2CPP::CClass*>("<SaveData>k__BackingField");
+	
+	if (saveData != nullptr) {
+		IL2CPP::CClass* heartShowLimitCount = saveData->GetMemberValue<IL2CPP::CClass*>("HeartShowLimitCount");
+		if (heartShowLimitCount != nullptr) {
+			int currentValue = heartShowLimitCount->CallMethodSafe<int>("get_Value");
+			if (currentValue != clampedValue) {
+				heartShowLimitCount->SetMemberValue<int>("internalValue", clampedValue);
+			}
+		}
+	}
+
+	IL2CPP::CClass* heartLimitText = pSelf->GetMemberValue<IL2CPP::CClass*>("_heartLimitText");
+	if (heartLimitText != nullptr) {
+		std::string text = std::to_string(clampedValue);
+		Unity::System_String* textString = IL2CPP::String::New(text);
+		heartLimitText->CallMethodSafe<void, Unity::System_String*>("set_text", textString);
+	}
+
+	IL2CPP::CClass* btnMinus10 = pSelf->GetMemberValue<IL2CPP::CClass*>("_heartShowLimitbuttonMinus10");
+	IL2CPP::CClass* btnPlus10 = pSelf->GetMemberValue<IL2CPP::CClass*>("_heartShowLimitbuttonPlus10");
+	IL2CPP::CClass* btnMin = pSelf->GetMemberValue<IL2CPP::CClass*>("_heartShowLimitbuttonMin");
+	IL2CPP::CClass* btnMax = pSelf->GetMemberValue<IL2CPP::CClass*>("_heartShowLimitbuttonMax");
+	IL2CPP::CClass* imgMinus10Off = pSelf->GetMemberValue<IL2CPP::CClass*>("_heartShowLimitimageMinus10Off");
+	IL2CPP::CClass* imgPlus10Off = pSelf->GetMemberValue<IL2CPP::CClass*>("_heartShowLimitimagePlus10Off");
+	IL2CPP::CClass* imgMinOff = pSelf->GetMemberValue<IL2CPP::CClass*>("_heartShowLimitimageMinOff");
+	IL2CPP::CClass* imgMaxOff = pSelf->GetMemberValue<IL2CPP::CClass*>("_heartShowLimitimageMaxOff");
+
+	if (btnMinus10 != nullptr) btnMinus10->CallMethodSafe<void, bool>("set_interactable", clampedValue > 0);
+	if (btnMin != nullptr) btnMin->CallMethodSafe<void, bool>("set_interactable", clampedValue > 0);
+	if (imgMinus10Off != nullptr) imgMinus10Off->CallMethodSafe<void, bool>("set_enabled", clampedValue < 1);
+	if (imgMinOff != nullptr) imgMinOff->CallMethodSafe<void, bool>("set_enabled", clampedValue < 1);
+
+	if (btnPlus10 != nullptr) btnPlus10->CallMethodSafe<void, bool>("set_interactable", clampedValue < 100);
+	if (btnMax != nullptr) btnMax->CallMethodSafe<void, bool>("set_interactable", clampedValue < 100);
+	if (imgPlus10Off != nullptr) imgPlus10Off->CallMethodSafe<void, bool>("set_enabled", clampedValue > 99);
+	if (imgMaxOff != nullptr) imgMaxOff->CallMethodSafe<void, bool>("set_enabled", clampedValue > 99);
+}
+
 static bool findMethodAndHook(const char* className, const char* methodName, int paramCount, void* hookFunc, void** originalFunc) { 
 	void* pMethod = IL2CPP::Class::Utils::GetMethodPointer(className, methodName, paramCount);
 	if (pMethod) {
@@ -764,6 +813,7 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 	NSArray* app_version_parts = [app_version componentsSeparatedByString:@"."];
 	int app_version_major = [app_version_parts[0] intValue];
 	int app_version_minor = [app_version_parts[1] intValue];
+	int app_version_patch = [app_version_parts[2] intValue];
 	if ((app_version_major == 4 && app_version_minor >= 9) || app_version_major > 4) {
 		if (!testSearch(il2cppFuncMap, app_version)) {
 			NSLog(@"[IL2CPP Tweak] IL2CPP symbols hidden mode. Search failed.");
@@ -793,15 +843,26 @@ BOOL hooked_didFinishLaunchingWithOptions(id self, SEL _cmd, UIApplication *appl
 		);
 	}
 
-	if ([qualityConfig[@"Enable.QuestLive.NoThrowAndWaitHook"] boolValue]) {
-		// Tecotec.QuestLive.Live.QuestLiveHeartObject.ShowHeart(bool show)
+	if ((app_version_major == 4 && app_version_minor == 11 && app_version_patch >= 1) || (app_version_major == 4 && app_version_minor > 11) || app_version_major > 4) {
+		// Tecotec.TPopupQuestLiveSettings.SetHeartShowLimitValue(int32_t value, bool playSe)
 		findMethodAndHook(
-			"Tecotec.QuestLive.Live.QuestLiveHeartObject",
-			"ShowHeart",
-			1,
-			(void*)hooked_QuestLiveHeartObject_ShowHeart,
-			(void**)&original_QuestLiveHeartObject_ShowHeart
+			"Tecotec.TPopupQuestLiveSettings",
+			"SetHeartShowLimitValue",
+			2,
+			(void*)hooked_TPopupQuestLiveSettings_SetHeartShowLimitValue,
+			(void**)&original_TPopupQuestLiveSettings_SetHeartShowLimitValue
 		);
+	} else {
+		if ([qualityConfig[@"Enable.QuestLive.NoThrowAndWaitHook"] boolValue]) {
+			// Tecotec.QuestLive.Live.QuestLiveHeartObject.ShowHeart(bool show)
+			findMethodAndHook(
+				"Tecotec.QuestLive.Live.QuestLiveHeartObject",
+				"ShowHeart",
+				1,
+				(void*)hooked_QuestLiveHeartObject_ShowHeart,
+				(void**)&original_QuestLiveHeartObject_ShowHeart
+			);
+		}
 	}
 
 	if ([qualityConfig[@"Enable.QuestLive.NoCutinCharacterHook"] boolValue]) {

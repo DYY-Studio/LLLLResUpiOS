@@ -33,12 +33,12 @@ static const NSDictionary *il2cpp_symbol_offsets = @{
     @"il2cpp_method_get_param_name": @0x522F4, // Internal function
     @"il2cpp_method_get_param": @0x340,
     @"il2cpp_class_from_il2cpp_type": @0xA0,
-    @"il2cpp_field_static_get_value": @-1,
-    @"il2cpp_field_static_set_value": @-1,
+    @"il2cpp_field_static_get_value": @0x5DA3C, // Internal function
+    @"il2cpp_field_static_set_value": @0x5DAEC,
     @"il2cpp_array_class_get": @0x6C,
     @"il2cpp_array_new": @0x74,
     @"il2cpp_assembly_get_image": @0x84,
-    @"il2cpp_image_get_name": @-1
+    @"il2cpp_image_get_name": @0x84
 };
 
 // 粗略检查找到的IL2CPP符号是否正确
