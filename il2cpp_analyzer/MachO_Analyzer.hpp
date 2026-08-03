@@ -183,7 +183,7 @@ uintptr_t locateFunctionBySignature(const char* targetModuleName, const std::str
     // 3. 执行模式匹配
     uintptr_t funcAddress = patternScan(
         (const uint8_t*)(textInfo.startAddress + startOffset), 
-        textInfo.size, 
+        textInfo.size - startOffset, 
         pattern, 
         mask
     );
