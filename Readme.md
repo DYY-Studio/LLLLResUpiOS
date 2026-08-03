@@ -7,7 +7,7 @@ iOS17.4以上设备使用[SkitDebug](https://github.com/StephenDev0/StikDebug)�
 
 # 环境要求
 * LiveContainer (Launch with JIT)
-* iOS 15 - iOS 26
+* iOS 15.0 - iOS 26.3 (iOS 26.4 未测试)
 
 # 支持功能
 * LiveStream分辨率调整(With, Fes)
@@ -103,7 +103,7 @@ iOS17.4以上设备使用[SkitDebug](https://github.com/StephenDev0/StikDebug)�
 |`Enable.QuestLive.NoThrowAndWaitHook` | true | [QuestLive] | 隐藏QuestLive屏幕心：<br>性能影响最大 |
 |`Enable.QuestLive.NoCutinCharacterHook` | true | [QuestLive] | 关闭QuestLive发动技能时右侧角色切入 |
 ||||
-|`Enable.LiveStream.NoAfterLimitationHook` | true | [LiveStream] | AFTER限入解除：<br>白嫖AFTER |
+|`Enable.LiveStream.NoAfterLimitationHook` | true | [LiveStream] | AFTER限入解除 |
 |`Enable.LiveStream.NoFesCameraLimitationHook` | true | [LiveStream] | Fes相机限制解除：<br>选择机位不受票种限制 |
 ||||
 |`Enable.FesCameraHook`|true| [LiveStream]| FesCamera限制解除：<br>允许全向旋转和长距离移动 |
@@ -112,6 +112,8 @@ iOS17.4以上设备使用[SkitDebug](https://github.com/StephenDev0/StikDebug)�
 ||||
 |`Enable.NoOrientationHook`| *1 | [全局] | 禁用旋转请求与判断<br>（iPad/macOS）<br>允许以神奇的窗口比例正常运行 | 
 |`Enable.LandscapePopupSizeFixHook`| *1 | [全局] | 修正横屏弹窗大小<br>（iPad/macOS） |
+||||
+|`Enable.NoDelayAdjustHook` | false | [LiveStream] | 禁用延迟校准
 
 *1 对iPhone默认禁用(false)，其他默认启用(true)
 # 许可证
